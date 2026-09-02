@@ -1,0 +1,139 @@
+<%- include('../partials/header') %>
+<div class="ucrs-shell">
+  <%- include('../partials/navbar-admin') %>
+  <main class="ucrs-main">
+    <div class="ucrs-topbar">
+      <button id="ucrs-sidebar-toggle" style="background:none;border:none;cursor:pointer;padding:4px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;color:var(--ucrs-gray-600)"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <span class="ucrs-topbar__title">Timetable Management</span>
+      <div class="ucrs-topbar__user">
+        <div class="ucrs-avatar ucrs-avatar--admin"><%= user.name.charAt(0).toUpperCase() %></div>
+        <span><%= user.name %></span>
+      </div>
+    </div>
+
+    <div class="ucrs-content">
+      <% if (flash.success && flash.success.length) { %>
+        <div class="ucrs-alert ucrs-alert--success"><span><%= flash.success[0] %></span></div>
+      <% } %>
+      <% if (flash.error && flash.error.length) { %>
+        <div class="ucrs-alert ucrs-alert--error"><span><%= flash.error[0] %></span></div>
+      <% } %>
+
+      <div class="ucrs-page-header ucrs-flex-between">
+        <h1>Timetable</h1>
+        <form method="GET" style="display:flex;align-items:center;gap:8px;">
+          <label style="font-size:0.875rem;font-weight:600;color:var(--ucrs-gray-600)">Semester:</label>
+          <input type="text" name="semester" class="ucrs-input" style="width:160px" value="<%= semester %>" />
+          <button type="submit" class="ucrs-btn ucrs-btn--ghost ucrs-btn--sm">Filter</button>
+        </form>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start;">
+        <!-- Entries Table -->
+        <div class="ucrs-card">
+          <div class="ucrs-card__header">
+            <span class="ucrs-card__title"><%= entries.length %> entry/entries for <%= semester %></span>
+          </div>
+          <% if (entries.length === 0) { %>
+            <div class="ucrs-empty">
+              <div class="ucrs-empty__icon">📅</div>
+              <h3>No timetable entries</h3>
+              <p>Create entries using the form on the right.</p>
+            </div>
+          <% } else { %>
+          <div class="ucrs-table-wrap">
+            <table class="ucrs-table">
+              <thead>
+                <tr><th>Day</th><th>Time</th><th>Course</th><th>Lecturer</th><th>Venue</th><th>Capacity</th><th>Actions</th></tr>
+              </thead>
+              <tbody>
+                <% entries.forEach(function(e) { %>
+                <tr>
+                  <td><strong><%= e.day %></strong></td>
+                  <td><span class="ucrs-time-chip"><%= String(e.start_time).slice(0,5) %> – <%= String(e.end_time).slice(0,5) %></span></td>
+                  <td>
+                    <span class="ucrs-badge ucrs-badge--primary"><%= e.code %></span>
+                    <div style="font-size:0.78rem;color:var(--ucrs-text-muted);margin-top:2px;"><%= e.title %></div>
+                  </td>
+                  <td><%= e.lecturer_name %></td>
+                  <td><%= e.venue_name %></td>
+                  <td><span class="ucrs-badge ucrs-badge--gray"><%= e.capacity %></span></td>
+                  <td>
+                    <form action="/admin/timetable/<%= e.id %>/delete" method="POST">
+                      <button type="submit" class="ucrs-btn ucrs-btn--danger ucrs-btn--sm"
+                        data-confirm="Remove this timetable entry?">Remove</button>
+                    </form>
+                  </td>
+                </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+          <% } %>
+        </div>
+
+        <!-- Create Entry Form -->
+        <div class="ucrs-card" style="position:sticky;top:80px;">
+          <div class="ucrs-card__header"><span class="ucrs-card__title">Add Timetable Entry</span></div>
+          <div class="ucrs-card__body">
+            <form action="/admin/timetable/create" method="POST">
+              <div class="ucrs-form-group">
+                <label class="ucrs-label ucrs-label--required">Course</label>
+                <select name="course_id" class="ucrs-select" required>
+                  <option value="">Select course…</option>
+                  <% courses.forEach(function(c) { %>
+                    <option value="<%= c.id %>"><%= c.code %> — <%= c.title %></option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="ucrs-form-group">
+                <label class="ucrs-label ucrs-label--required">Lecturer</label>
+                <select name="lecturer_id" class="ucrs-select" required>
+                  <option value="">Select lecturer…</option>
+                  <% lecturers.forEach(function(l) { %>
+                    <option value="<%= l.id %>"><%= l.name %> (<%= l.staff_id || '' %>)</option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="ucrs-form-group">
+                <label class="ucrs-label ucrs-label--required">Venue</label>
+                <select name="venue_id" class="ucrs-select" required>
+                  <option value="">Select venue…</option>
+                  <% venues.forEach(function(v) { %>
+                    <option value="<%= v.id %>"><%= v.name %> (cap: <%= v.capacity %>)</option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="ucrs-form-group">
+                <label class="ucrs-label ucrs-label--required">Semester</label>
+                <input type="text" name="semester" class="ucrs-input" required value="<%= semester %>" />
+              </div>
+              <div class="ucrs-form-group">
+                <label class="ucrs-label ucrs-label--required">Day</label>
+                <select name="day" class="ucrs-select" required>
+                  <% ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].forEach(function(d) { %>
+                    <option value="<%= d %>"><%= d %></option>
+                  <% }); %>
+                </select>
+              </div>
+              <div class="ucrs-form-row">
+                <div class="ucrs-form-group">
+                  <label class="ucrs-label ucrs-label--required">Start Time</label>
+                  <input type="time" name="start_time" class="ucrs-input" required value="08:00" />
+                </div>
+                <div class="ucrs-form-group">
+                  <label class="ucrs-label ucrs-label--required">End Time</label>
+                  <input type="time" name="end_time" class="ucrs-input" required value="10:00" />
+                </div>
+              </div>
+              <button type="submit" class="ucrs-btn ucrs-btn--primary ucrs-btn--full">Add Entry</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <%- include('../partials/footer') %>
+  </main>
+</div>

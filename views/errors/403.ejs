@@ -1,0 +1,19 @@
+<%- include('../partials/header') %>
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--ucrs-bg);">
+  <div style="text-align:center;padding:40px;">
+    <div style="font-size:6rem;font-weight:800;color:var(--ucrs-warning);opacity:0.2;line-height:1;">403</div>
+    <h1 style="font-size:1.5rem;font-weight:700;color:var(--ucrs-gray-800);margin:12px 0 8px;">Access Denied</h1>
+    <p style="color:var(--ucrs-text-muted);margin-bottom:12px;">
+      <%= typeof message !== 'undefined' && message ? message : 'You do not have permission to access this page.' %>
+    </p>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:20px;">
+      <a href="javascript:history.back()" class="ucrs-btn ucrs-btn--ghost">← Go Back</a>
+      <% if (user) { %>
+        <a href="/<%= user.role %>/dashboard" class="ucrs-btn ucrs-btn--primary">Go to Dashboard</a>
+      <% } else { %>
+        <a href="/login" class="ucrs-btn ucrs-btn--primary">Sign In</a>
+      <% } %>
+    </div>
+  </div>
+</div>
+<%- include('../partials/footer') %>

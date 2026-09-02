@@ -1,0 +1,147 @@
+<%- include('../partials/header') %>
+<div class="ucrs-shell" id="ucrs-overlay-wrap">
+  <%- include('../partials/navbar-student') %>
+  <main class="ucrs-main">
+    <!-- Topbar -->
+    <div class="ucrs-topbar">
+      <button id="ucrs-sidebar-toggle" style="background:none;border:none;cursor:pointer;padding:4px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;color:var(--ucrs-gray-600)">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+      <span class="ucrs-topbar__title">Student Dashboard</span>
+      <div class="ucrs-topbar__user">
+        <div class="ucrs-avatar ucrs-avatar--student"><%= user.name.charAt(0).toUpperCase() %></div>
+        <span><%= user.name %></span>
+      </div>
+    </div>
+
+    <div class="ucrs-content">
+      <!-- Flash Messages -->
+      <% if (flash.error && flash.error.length) { %>
+        <div class="ucrs-alert ucrs-alert--error"><span><%= flash.error[0] %></span></div>
+      <% } %>
+      <% if (flash.success && flash.success.length) { %>
+        <div class="ucrs-alert ucrs-alert--success"><span><%= flash.success[0] %></span></div>
+      <% } %>
+
+      <div class="ucrs-page-header">
+        <h1>Good day, <%= user.name.split(' ')[0] %>! 👋</h1>
+        <p>Welcome to the UNICROSS Course Registration System. Semester: <strong><%= semester %></strong></p>
+      </div>
+
+      <!-- Stats -->
+      <div class="ucrs-stats-grid">
+        <div class="ucrs-stat ucrs-stat--primary">
+          <div class="ucrs-stat__label">Registered Courses</div>
+          <div class="ucrs-stat__value"><%= schedule.length %></div>
+          <div class="ucrs-stat__sub">this semester</div>
+        </div>
+        <div class="ucrs-stat ucrs-stat--success">
+          <div class="ucrs-stat__label">Credit Units</div>
+          <div class="ucrs-stat__value"><%= totalCredits %></div>
+          <div class="ucrs-stat__sub">of <%= policy.max %> max</div>
+        </div>
+        <div class="ucrs-stat">
+          <div class="ucrs-stat__label">Credit Min Required</div>
+          <div class="ucrs-stat__value ucrs-font-bold" style="font-size:1.5rem;color:var(--ucrs-gray-700)"><%= policy.min %></div>
+          <div class="ucrs-stat__sub">units per semester</div>
+        </div>
+        <div class="ucrs-stat" style="<%= totalCredits < policy.min ? 'border-color:var(--ucrs-warning)' : '' %>">
+          <div class="ucrs-stat__label">Status</div>
+          <div class="ucrs-stat__value" style="font-size:1rem;margin-top:4px;">
+            <% if (totalCredits === 0) { %>
+              <span class="ucrs-badge ucrs-badge--warning">Not Registered</span>
+            <% } else if (totalCredits < policy.min) { %>
+              <span class="ucrs-badge ucrs-badge--warning">Below Minimum</span>
+            <% } else { %>
+              <span class="ucrs-badge ucrs-badge--success">Active</span>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Credit Load Bar -->
+      <% if (totalCredits > 0) { %>
+      <div class="ucrs-card ucrs-mb-6">
+        <div class="ucrs-card__body">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-size:0.875rem;font-weight:600;color:var(--ucrs-gray-700)">Credit Load Progress</span>
+            <span style="font-size:0.875rem;color:var(--ucrs-text-muted)"><%= totalCredits %> / <%= policy.max %> units</span>
+          </div>
+          <div class="ucrs-credit-bar">
+            <div class="ucrs-credit-bar__fill<%= totalCredits >= policy.max ? ' ucrs-credit-bar__fill--danger' : (totalCredits / policy.max >= 0.8 ? ' ucrs-credit-bar__fill--warning' : '') %>"
+              style="width:<%= Math.min((totalCredits/policy.max)*100, 100) %>%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--ucrs-text-muted);margin-top:4px;">
+            <span>Min: <%= policy.min %> units</span>
+            <span>Max: <%= policy.max %> units</span>
+          </div>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- Quick Actions -->
+      <div class="ucrs-card ucrs-mb-6">
+        <div class="ucrs-card__header">
+          <span class="ucrs-card__title">Quick Actions</span>
+        </div>
+        <div class="ucrs-card__body" style="display:flex;gap:12px;flex-wrap:wrap;">
+          <a href="/student/register" class="ucrs-btn ucrs-btn--primary">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;height:18px">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+            </svg>
+            Register Courses
+          </a>
+          <a href="/student/catalog" class="ucrs-btn ucrs-btn--outline">Browse Course Catalog</a>
+          <a href="/student/schedule" class="ucrs-btn ucrs-btn--ghost">View Full Schedule</a>
+        </div>
+      </div>
+
+      <!-- Current Schedule Preview -->
+      <div class="ucrs-card">
+        <div class="ucrs-card__header">
+          <span class="ucrs-card__title">My Schedule — <%= semester %></span>
+          <a href="/student/schedule" class="ucrs-btn ucrs-btn--ghost ucrs-btn--sm">View All</a>
+        </div>
+        <% if (schedule.length === 0) { %>
+          <div class="ucrs-empty">
+            <div class="ucrs-empty__icon">📅</div>
+            <h3>No Courses Registered</h3>
+            <p>You haven't registered for any courses this semester.</p>
+            <a href="/student/register" class="ucrs-btn ucrs-btn--primary" style="margin-top:16px;display:inline-flex;">Register Now</a>
+          </div>
+        <% } else { %>
+          <div class="ucrs-table-wrap">
+            <table class="ucrs-table">
+              <thead>
+                <tr>
+                  <th>Code</th><th>Course Title</th><th>Credits</th>
+                  <th>Day</th><th>Time</th><th>Venue</th><th>Lecturer</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% schedule.forEach(function(row) { %>
+                <tr>
+                  <td><span class="ucrs-badge ucrs-badge--primary"><%= row.code %></span></td>
+                  <td><strong><%= row.title %></strong></td>
+                  <td><span class="ucrs-badge ucrs-badge--gray"><%= row.credit_units %> units</span></td>
+                  <td><%= row.day || '—' %></td>
+                  <td>
+                    <% if (row.start_time && row.end_time) { %>
+                      <span class="ucrs-time-chip"><%= String(row.start_time).slice(0,5) %> – <%= String(row.end_time).slice(0,5) %></span>
+                    <% } else { %>—<% } %>
+                  </td>
+                  <td><%= row.venue_name || '—' %></td>
+                  <td><%= row.lecturer_name || '—' %></td>
+                </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+    <%- include('../partials/footer') %>
+  </main>
+</div>

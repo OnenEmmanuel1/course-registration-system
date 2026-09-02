@@ -1,0 +1,124 @@
+<%- include('../partials/header') %>
+
+<div class="ucrs-login-page">
+  <!-- Login Panel -->
+  <div class="ucrs-login__panel">
+    <div class="ucrs-login__brand">
+      <div class="ucrs-login__brand-icon">U</div>
+      <div>
+        <div class="ucrs-login__brand-name">UCRSystem</div>
+        <div class="ucrs-login__brand-sub">UNICROSS University</div>
+      </div>
+    </div>
+
+    <h1>Welcome Back</h1>
+    <p class="ucrs-login__sub">Sign in to access the Course Registration System</p>
+
+    <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+      <% error.forEach(function(msg) { %>
+        <div class="ucrs-alert ucrs-alert--error" role="alert">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          </svg>
+          <span><%= msg %></span>
+        </div>
+      <% }); %>
+    <% } %>
+
+    <% if (typeof info !== 'undefined' && info && info.length > 0) { %>
+      <% info.forEach(function(msg) { %>
+        <div class="ucrs-alert ucrs-alert--info"><span><%= msg %></span></div>
+      <% }); %>
+    <% } %>
+
+    <form action="/login" method="POST" novalidate>
+      <div class="ucrs-form-group">
+        <label for="email" class="ucrs-label ucrs-label--required">Email Address</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          class="ucrs-input"
+          placeholder="your.email@unicross.edu.ng"
+          autocomplete="email"
+          required
+        />
+      </div>
+
+      <div class="ucrs-form-group">
+        <label for="password" class="ucrs-label ucrs-label--required">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          class="ucrs-input"
+          placeholder="Enter your password"
+          autocomplete="current-password"
+          required
+        />
+      </div>
+
+      <button type="submit" class="ucrs-btn ucrs-btn--primary ucrs-btn--full ucrs-btn--lg" id="login-submit-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:20px;height:20px">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+        </svg>
+        Sign In
+      </button>
+    </form>
+
+    <div style="margin-top:32px;padding:20px;background:var(--ucrs-gray-50);border-radius:var(--ucrs-radius);border:1px solid var(--ucrs-border);">
+      <p style="font-size:0.8125rem;font-weight:600;color:var(--ucrs-gray-600);margin-bottom:10px;">🔐 Test Credentials (all passwords: <code>password123</code>)</p>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:0.8rem;color:var(--ucrs-gray-600);">
+        <div><span class="ucrs-role-pill ucrs-role-pill--admin" style="margin-right:6px;">Admin</span> admin@unicross.edu.ng</div>
+        <div><span class="ucrs-role-pill ucrs-role-pill--lecturer" style="margin-right:6px;">Lecturer</span> amaka.eze@unicross.edu.ng</div>
+        <div><span class="ucrs-role-pill ucrs-role-pill--student" style="margin-right:6px;">Student</span> carol@unicross.edu.ng (has all prereqs)</div>
+        <div><span class="ucrs-role-pill ucrs-role-pill--student" style="margin-right:6px;">Student</span> alice@unicross.edu.ng (limited prereqs)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero Panel -->
+  <div class="ucrs-login__hero">
+    <div class="ucrs-login__hero-logo">UC</div>
+    <h2>University Course Registration System</h2>
+    <p>Register courses, manage timetables, and track your academic progress — all in one place.</p>
+
+    <div style="margin-top:40px;display:flex;flex-direction:column;gap:16px;width:100%;max-width:340px;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:40px;height:40px;background:var(--ucrs-primary-dark);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2" style="width:20px;height:20px">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:0.9rem;">Real-Time Validation</div>
+          <div style="font-size:0.8rem;opacity:0.8;">Instant prerequisite & credit-limit checks</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:40px;height:40px;background:var(--ucrs-primary-dark);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2" style="width:20px;height:20px">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:0.9rem;">Personalized Schedules</div>
+          <div style="font-size:0.8rem;opacity:0.8;">Venue, lecturer & time — all in view</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div style="width:40px;height:40px;background:var(--ucrs-primary-dark);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="white" stroke-width="2" style="width:20px;height:20px">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:0.9rem;">Admin Reports</div>
+          <div style="font-size:0.8rem;opacity:0.8;">Enrollment & venue utilization with CSV export</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,151 @@
+<%- include('../partials/header') %>
+<div class="ucrs-shell">
+  <%- include('../partials/navbar-admin') %>
+  <main class="ucrs-main">
+    <div class="ucrs-topbar">
+      <button id="ucrs-sidebar-toggle" style="background:none;border:none;cursor:pointer;padding:4px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;color:var(--ucrs-gray-600)"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <span class="ucrs-topbar__title">Reports</span>
+      <div class="ucrs-topbar__user">
+        <div class="ucrs-avatar ucrs-avatar--admin"><%= user.name.charAt(0).toUpperCase() %></div>
+        <span><%= user.name %></span>
+      </div>
+    </div>
+
+    <div class="ucrs-content">
+      <div class="ucrs-page-header"><h1>Reports & Analytics</h1></div>
+
+      <!-- Report Selector -->
+      <div class="ucrs-filters">
+        <form method="GET" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;width:100%;">
+          <label style="font-weight:600;font-size:0.875rem;">Report Type:</label>
+          <select name="type" class="ucrs-select" style="width:220px;" onchange="this.form.submit()">
+            <option value="enrollment" <%= type === 'enrollment' ? 'selected' : '' %>>Enrollment by Course</option>
+            <option value="venue"      <%= type === 'venue'      ? 'selected' : '' %>>Venue Utilization</option>
+            <option value="credit"     <%= type === 'credit'     ? 'selected' : '' %>>Credit Load Distribution</option>
+          </select>
+          <label style="font-weight:600;font-size:0.875rem;">Semester:</label>
+          <input type="text" name="semester" class="ucrs-input" style="width:160px" value="<%= semester %>" />
+          <button type="submit" class="ucrs-btn ucrs-btn--primary ucrs-btn--sm">Generate</button>
+          <a href="/admin/reports/export?type=<%= type %>&semester=<%= encodeURIComponent(semester) %>"
+             class="ucrs-btn ucrs-btn--success ucrs-btn--sm">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            Export CSV
+          </a>
+        </form>
+      </div>
+
+      <div class="ucrs-card">
+        <div class="ucrs-card__header">
+          <span class="ucrs-card__title">
+            <% if (type === 'enrollment') { %>Enrollment Report<% } %>
+            <% if (type === 'venue') { %>Venue Utilization Report<% } %>
+            <% if (type === 'credit') { %>Credit Load Distribution<% } %>
+            — <%= semester %>
+          </span>
+          <span class="ucrs-badge ucrs-badge--gray"><%= data.length %> rows</span>
+        </div>
+
+        <% if (data.length === 0) { %>
+          <div class="ucrs-empty">
+            <div class="ucrs-empty__icon">📊</div>
+            <h3>No Data Available</h3>
+            <p>No records found for this report and semester.</p>
+          </div>
+        <% } else { %>
+        <div class="ucrs-table-wrap">
+
+          <% if (type === 'enrollment') { %>
+          <table class="ucrs-table">
+            <thead><tr><th>Code</th><th>Title</th><th>Dept</th><th>Level</th><th>Credits</th><th>Lecturer</th><th>Venue</th><th>Enrolled</th></tr></thead>
+            <tbody>
+              <% data.forEach(function(row) { %>
+              <tr>
+                <td><span class="ucrs-badge ucrs-badge--primary"><%= row.code %></span></td>
+                <td><strong><%= row.title %></strong></td>
+                <td><%= row.department %></td>
+                <td>L<%= row.level %></td>
+                <td><span class="ucrs-badge ucrs-badge--gray"><%= row.credit_units %></span></td>
+                <td><%= row.lecturer_name || '—' %></td>
+                <td><%= row.venue_name || '—' %></td>
+                <td>
+                  <span class="ucrs-badge <%= parseInt(row.enrolled_count) > 0 ? 'ucrs-badge--success' : 'ucrs-badge--gray' %>">
+                    <%= row.enrolled_count %>
+                  </span>
+                </td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+          <% } %>
+
+          <% if (type === 'venue') { %>
+          <table class="ucrs-table">
+            <thead><tr><th>Venue</th><th>Capacity</th><th>Course</th><th>Day</th><th>Time</th><th>Enrolled</th><th>Utilization</th></tr></thead>
+            <tbody>
+              <% data.forEach(function(row) { %>
+              <tr>
+                <td><strong><%= row.venue_name %></strong></td>
+                <td><span class="ucrs-badge ucrs-badge--gray"><%= row.capacity %></span></td>
+                <td><%= row.code ? '<span class="ucrs-badge ucrs-badge--primary">' + row.code + '</span>' : '—' %></td>
+                <td><%= row.day || '—' %></td>
+                <td>
+                  <% if (row.start_time && row.end_time) { %>
+                    <span class="ucrs-time-chip"><%= String(row.start_time).slice(0,5) %> – <%= String(row.end_time).slice(0,5) %></span>
+                  <% } else { %>—<% } %>
+                </td>
+                <td><%= row.enrolled_count %></td>
+                <td>
+                  <% const pct = parseFloat(row.utilization_pct || 0); %>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:80px;background:var(--ucrs-gray-200);border-radius:100px;height:8px;overflow:hidden;">
+                      <div style="width:<%= Math.min(pct,100) %>%;height:100%;background:<%= pct>=100?'var(--ucrs-danger)':(pct>=80?'var(--ucrs-warning)':'var(--ucrs-success)') %>"></div>
+                    </div>
+                    <span style="font-size:0.8rem;font-weight:600;"><%= pct %>%</span>
+                  </div>
+                </td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+          <% } %>
+
+          <% if (type === 'credit') { %>
+          <table class="ucrs-table">
+            <thead><tr><th>Student</th><th>Matric No.</th><th>Dept</th><th>Level</th><th>Courses</th><th>Total Credits</th><th>Status</th></tr></thead>
+            <tbody>
+              <% data.forEach(function(row) { %>
+              <tr>
+                <td><strong><%= row.student_name %></strong></td>
+                <td style="font-size:0.8rem;"><%= row.matric_no || '—' %></td>
+                <td><%= row.department %></td>
+                <td>L<%= row.level %></td>
+                <td><span class="ucrs-badge ucrs-badge--gray"><%= row.course_count %></span></td>
+                <td><strong><%= row.total_credits %></strong></td>
+                <td>
+                  <% if (row.total_credits === 0) { %>
+                    <span class="ucrs-badge ucrs-badge--gray">Not Registered</span>
+                  <% } else if (row.total_credits < 12) { %>
+                    <span class="ucrs-badge ucrs-badge--warning">Below Min</span>
+                  <% } else if (row.total_credits > 24) { %>
+                    <span class="ucrs-badge ucrs-badge--danger">Over Max</span>
+                  <% } else { %>
+                    <span class="ucrs-badge ucrs-badge--success">Valid</span>
+                  <% } %>
+                </td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+          <% } %>
+
+        </div>
+        <% } %>
+      </div>
+    </div>
+    <%- include('../partials/footer') %>
+  </main>
+</div>

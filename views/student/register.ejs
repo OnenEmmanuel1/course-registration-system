@@ -1,0 +1,180 @@
+<%- include('../partials/header') %>
+<div class="ucrs-shell">
+  <%- include('../partials/navbar-student') %>
+  <main class="ucrs-main">
+    <div class="ucrs-topbar">
+      <button id="ucrs-sidebar-toggle" style="background:none;border:none;cursor:pointer;padding:4px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;color:var(--ucrs-gray-600)"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <span class="ucrs-topbar__title">Course Registration</span>
+      <div class="ucrs-topbar__user">
+        <div class="ucrs-avatar ucrs-avatar--student"><%= user.name.charAt(0).toUpperCase() %></div>
+        <span><%= user.name %></span>
+      </div>
+    </div>
+
+    <div class="ucrs-content">
+      <div class="ucrs-page-header">
+        <h1>Course Registration</h1>
+        <p>Select courses for <strong><%= semester %></strong>. Each selection is validated individually for prerequisites and credit limits.</p>
+      </div>
+
+      <!-- Validation Results (shown after submission) -->
+      <% if (results && results.length > 0) { %>
+      <div id="ucrs-validation-results">
+        <%
+          const passed = results.filter(r => r.ok);
+          const failed = results.filter(r => !r.ok);
+        %>
+        <div class="ucrs-alert ucrs-alert--<%= failed.length > 0 && passed.length > 0 ? 'warning' : (failed.length > 0 ? 'error' : 'success') %>">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:20px;height:20px;flex-shrink:0">
+            <% if (failed.length === 0) { %>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+            <% } else { %>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            <% } %>
+          </svg>
+          <div>
+            <strong>
+              <% if (passed.length > 0) { %><%= passed.length %> course(s) registered successfully. <% } %>
+              <% if (failed.length > 0) { %><%= failed.length %> course(s) could not be registered — see details below. <% } %>
+            </strong>
+          </div>
+        </div>
+
+        <div class="ucrs-validation-results">
+          <% results.forEach(function(r) { %>
+          <div class="ucrs-result-item ucrs-result-item--<%= r.ok ? 'pass' : 'fail' %>">
+            <div class="ucrs-result-item__icon"><%= r.ok ? '✓' : '✗' %></div>
+            <div class="ucrs-result-item__body">
+              <div class="ucrs-result-item__course"><%= r.code %> — <%= r.title %></div>
+              <% if (r.ok) { %>
+                <div class="ucrs-result-item__reason" style="color:var(--ucrs-success)">Successfully registered for this semester.</div>
+              <% } else { %>
+                <div class="ucrs-result-item__reason"><%= r.reason %></div>
+                <% if (r.type === 'prerequisite') { %>
+                  <span class="ucrs-result-item__type-badge ucrs-type-prereq">⚠ Prerequisite Not Met</span>
+                  <% if (r.details && r.details.missing) { %>
+                    <div style="margin-top:6px;font-size:0.8rem;color:var(--ucrs-lecturer);">
+                      <strong>Missing:</strong>
+                      <% r.details.missing.forEach(function(m) { %>
+                        <span class="ucrs-badge ucrs-badge--purple" style="margin:2px"><%= m.code %></span>
+                      <% }); %>
+                    </div>
+                  <% } %>
+                  <div style="margin-top:6px;font-size:0.8rem;color:var(--ucrs-gray-600);">
+                    💡 <strong>Action:</strong> Complete the missing prerequisite course(s) first, then re-register in a future semester.
+                  </div>
+                <% } else if (r.type === 'credit_limit') { %>
+                  <span class="ucrs-result-item__type-badge ucrs-type-credit">📊 Credit Limit Exceeded</span>
+                  <% if (r.details) { %>
+                    <div style="margin-top:6px;font-size:0.8rem;color:var(--ucrs-gray-600);">
+                      Current: <strong><%= r.details.current %></strong> units &nbsp;+&nbsp;
+                      This course: <strong><%= r.details.courseUnits %></strong> units &nbsp;=&nbsp;
+                      <strong style="color:var(--ucrs-danger)"><%= r.details.proposed %></strong> units
+                      (exceeds max of <strong><%= r.details.max %></strong>)
+                    </div>
+                  <% } %>
+                  <div style="margin-top:6px;font-size:0.8rem;color:var(--ucrs-gray-600);">
+                    💡 <strong>Action:</strong> Drop another course first to free up credit units, or choose a lighter course.
+                  </div>
+                <% } else if (r.type === 'already_registered') { %>
+                  <span class="ucrs-result-item__type-badge ucrs-type-dup">✓ Already Registered</span>
+                <% } %>
+              <% } %>
+            </div>
+          </div>
+          <% }); %>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- Credit Status Bar -->
+      <div class="ucrs-card ucrs-mb-6">
+        <div class="ucrs-card__body">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <span style="font-weight:600;font-size:0.9rem;color:var(--ucrs-gray-700)">Current Credit Load</span>
+            <span id="ucrs-credit-label" style="font-size:0.875rem;color:var(--ucrs-text-muted)">
+              <%= currentCredits %> / <%= policy.max %> credit units
+            </span>
+          </div>
+          <div class="ucrs-credit-bar">
+            <div id="ucrs-credit-preview"
+              class="ucrs-credit-bar__fill<%= currentCredits >= policy.max ? ' ucrs-credit-bar__fill--danger' : (currentCredits / policy.max >= 0.8 ? ' ucrs-credit-bar__fill--warning' : '') %>"
+              style="width:<%= Math.min((currentCredits/policy.max)*100, 100) %>%"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--ucrs-text-muted);margin-top:4px;">
+            <span>Min required: <strong><%= policy.min %> units</strong></span>
+            <span>Maximum: <strong><%= policy.max %> units</strong></span>
+          </div>
+          <!-- Hidden data elements for JS -->
+          <span id="ucrs-credit-current" data-value="<%= currentCredits %>" style="display:none"></span>
+          <span id="ucrs-credit-max" data-value="<%= policy.max %>" style="display:none"></span>
+          <span id="ucrs-credit-min" data-value="<%= policy.min %>" style="display:none"></span>
+          <input type="hidden" id="ucrs-semester" value="<%= semester %>" />
+        </div>
+      </div>
+
+      <!-- Registration Form -->
+      <form action="/student/register" method="POST" id="ucrs-register-form">
+        <div class="ucrs-card">
+          <div class="ucrs-card__header">
+            <span class="ucrs-card__title">Available Courses</span>
+            <div style="display:flex;gap:8px;">
+              <button type="button" id="ucrs-validate-btn" class="ucrs-btn ucrs-btn--primary">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:16px;height:16px">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Validate & Register
+              </button>
+              <button type="submit" class="ucrs-btn ucrs-btn--success ucrs-btn--sm" id="ucrs-submit-btn">Submit via Form</button>
+            </div>
+          </div>
+          <div class="ucrs-card__body">
+            <p class="ucrs-text-sm ucrs-text-muted" style="margin-bottom:16px;">
+              Click a course card to select it. Greyed cards are already registered. Use <strong>"Validate & Register"</strong> for instant per-course feedback via the API.
+            </p>
+
+            <% const departments = [...new Set(courses.map(c => c.department))].sort(); %>
+            <% departments.forEach(function(dept) { %>
+              <h3 style="font-size:0.875rem;font-weight:700;color:var(--ucrs-gray-500);text-transform:uppercase;letter-spacing:0.06em;margin:20px 0 12px;border-bottom:1px solid var(--ucrs-border);padding-bottom:6px;"><%= dept %></h3>
+              <div class="ucrs-course-grid">
+                <% courses.filter(c => c.department === dept).forEach(function(c) {
+                  const isRegistered = registeredIds.has(c.id);
+                %>
+                  <div class="ucrs-course-card <%= isRegistered ? 'registered' : '' %>"
+                       data-selectable="<%= isRegistered ? 'false' : 'true' %>"
+                       data-course-id="<%= c.id %>">
+                    <% if (!isRegistered) { %>
+                    <input type="checkbox"
+                           name="courseIds"
+                           value="<%= c.id %>"
+                           data-credits="<%= c.credit_units %>"
+                           id="course-<%= c.id %>" />
+                    <% } %>
+
+                    <div class="ucrs-course-card__code"><%= c.code %></div>
+                    <div class="ucrs-course-card__title"><%= c.title %></div>
+                    <div class="ucrs-course-card__meta">
+                      <span class="ucrs-badge ucrs-badge--gray"><%= c.credit_units %> units</span>
+                      <span class="ucrs-badge ucrs-badge--gray">Level <%= c.level %></span>
+                      <% if (isRegistered) { %>
+                        <span class="ucrs-badge ucrs-badge--success">✓ Registered</span>
+                      <% } %>
+                    </div>
+                    <% if (c.prereq_codes) { %>
+                    <div class="ucrs-course-card__prereqs">
+                      <strong>Prereq:</strong> <%= c.prereq_codes %>
+                    </div>
+                    <% } %>
+                  </div>
+                <% }); %>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+      </form>
+    </div>
+    <%- include('../partials/footer') %>
+  </main>
+</div>

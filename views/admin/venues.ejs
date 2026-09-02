@@ -1,0 +1,90 @@
+<%- include('../partials/header') %>
+<div class="ucrs-shell">
+  <%- include('../partials/navbar-admin') %>
+  <main class="ucrs-main">
+    <div class="ucrs-topbar">
+      <button id="ucrs-sidebar-toggle" style="background:none;border:none;cursor:pointer;padding:4px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;color:var(--ucrs-gray-600)"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <span class="ucrs-topbar__title">Venue Management</span>
+      <div class="ucrs-topbar__user">
+        <div class="ucrs-avatar ucrs-avatar--admin"><%= user.name.charAt(0).toUpperCase() %></div>
+        <span><%= user.name %></span>
+      </div>
+    </div>
+
+    <div class="ucrs-content">
+      <% if (flash.success && flash.success.length) { %>
+        <div class="ucrs-alert ucrs-alert--success"><span><%= flash.success[0] %></span></div>
+      <% } %>
+      <% if (flash.error && flash.error.length) { %>
+        <div class="ucrs-alert ucrs-alert--error"><span><%= flash.error[0] %></span></div>
+      <% } %>
+
+      <div class="ucrs-page-header"><h1>Manage Venues</h1></div>
+
+      <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;">
+        <!-- Venues List -->
+        <div class="ucrs-card">
+          <div class="ucrs-card__header">
+            <span class="ucrs-card__title"><%= venues.length %> Venue(s)</span>
+          </div>
+          <div class="ucrs-table-wrap">
+            <table class="ucrs-table">
+              <thead><tr><th>Name</th><th>Building</th><th>Capacity</th><th>Actions</th></tr></thead>
+              <tbody>
+                <% venues.forEach(function(v) { %>
+                <tr>
+                  <td><strong><%= v.name %></strong></td>
+                  <td><%= v.building || '—' %></td>
+                  <td><span class="ucrs-badge ucrs-badge--gray"><%= v.capacity %> seats</span></td>
+                  <td>
+                    <div style="display:flex;gap:6px;">
+                      <a href="/admin/venues/<%= v.id %>/edit" class="ucrs-btn ucrs-btn--ghost ucrs-btn--sm">Edit</a>
+                      <form action="/admin/venues/<%= v.id %>/delete" method="POST" style="display:inline;">
+                        <button type="submit" class="ucrs-btn ucrs-btn--danger ucrs-btn--sm"
+                          data-confirm="Delete venue '<%= v.name %>'?">Delete</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Create/Edit Form -->
+        <div class="ucrs-card" style="position:sticky;top:80px;">
+          <div class="ucrs-card__header">
+            <span class="ucrs-card__title"><%= editVenue ? 'Edit Venue' : 'Add New Venue' %></span>
+            <% if (editVenue) { %><a href="/admin/venues" class="ucrs-btn ucrs-btn--ghost ucrs-btn--sm">Cancel</a><% } %>
+          </div>
+          <div class="ucrs-card__body">
+            <form action="<%= editVenue ? '/admin/venues/' + editVenue.id + '/update' : '/admin/venues/create' %>" method="POST">
+              <div class="ucrs-form-group">
+                <label class="ucrs-label ucrs-label--required">Venue Name</label>
+                <input type="text" name="name" class="ucrs-input" required placeholder="e.g. LT-A"
+                  value="<%= editVenue ? editVenue.name : '' %>" />
+              </div>
+              <div class="ucrs-form-group">
+                <label class="ucrs-label ucrs-label--required">Capacity</label>
+                <input type="number" name="capacity" class="ucrs-input" required min="1" max="2000"
+                  value="<%= editVenue ? editVenue.capacity : 30 %>" />
+              </div>
+              <div class="ucrs-form-group">
+                <label class="ucrs-label">Building</label>
+                <input type="text" name="building" class="ucrs-input" placeholder="Building/Block name"
+                  value="<%= editVenue ? editVenue.building || '' : '' %>" />
+              </div>
+              <button type="submit" class="ucrs-btn ucrs-btn--primary ucrs-btn--full">
+                <%= editVenue ? 'Update Venue' : 'Create Venue' %>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <%- include('../partials/footer') %>
+  </main>
+</div>

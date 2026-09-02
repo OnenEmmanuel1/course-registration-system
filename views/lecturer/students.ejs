@@ -1,0 +1,53 @@
+<%- include('../partials/header') %>
+<div class="ucrs-shell">
+  <%- include('../partials/navbar-lecturer') %>
+  <main class="ucrs-main">
+    <div class="ucrs-topbar">
+      <button id="ucrs-sidebar-toggle" style="background:none;border:none;cursor:pointer;padding:4px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;color:var(--ucrs-gray-600)"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <span class="ucrs-topbar__title">Enrolled Students</span>
+      <div class="ucrs-topbar__user">
+        <div class="ucrs-avatar ucrs-avatar--lecturer"><%= user.name.charAt(0).toUpperCase() %></div>
+        <span><%= user.name %></span>
+      </div>
+    </div>
+    <div class="ucrs-content">
+      <div class="ucrs-page-header ucrs-flex-between">
+        <div>
+          <h1>Enrolled Students</h1>
+          <p><span class="ucrs-badge ucrs-badge--purple"><%= course.code %></span> <%= course.title %> &mdash; <%= semester %></p>
+        </div>
+        <a href="/lecturer/schedule" class="ucrs-btn ucrs-btn--ghost ucrs-btn--sm">← Back to Schedule</a>
+      </div>
+
+      <div class="ucrs-card">
+        <div class="ucrs-card__header">
+          <span class="ucrs-card__title"><%= students.length %> student(s) enrolled</span>
+        </div>
+        <% if (students.length === 0) { %>
+          <div class="ucrs-empty"><div class="ucrs-empty__icon">👥</div><h3>No students enrolled yet.</h3></div>
+        <% } else { %>
+        <div class="ucrs-table-wrap">
+          <table class="ucrs-table">
+            <thead><tr><th>Name</th><th>Matric No.</th><th>Department</th><th>Level</th><th>Registered</th><th>Status</th></tr></thead>
+            <tbody>
+              <% students.forEach(function(s) { %>
+              <tr>
+                <td><strong><%= s.name %></strong></td>
+                <td style="font-size:0.8rem;"><%= s.matric_no || '—' %></td>
+                <td><%= s.department %></td>
+                <td>Level <%= s.level %></td>
+                <td><%= new Date(s.registered_at).toLocaleDateString() %></td>
+                <td><span class="ucrs-badge ucrs-badge--success"><%= s.status %></span></td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+        <% } %>
+      </div>
+    </div>
+    <%- include('../partials/footer') %>
+  </main>
+</div>

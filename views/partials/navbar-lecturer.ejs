@@ -1,0 +1,60 @@
+<!-- Sidebar: Lecturer Role -->
+<aside class="ucrs-sidebar" id="ucrs-sidebar">
+  <div class="ucrs-sidebar__brand">
+    <div class="ucrs-sidebar__logo">U</div>
+    <div class="ucrs-sidebar__brand-text">
+      <span class="ucrs-sidebar__brand-name">UCRSystem</span>
+      <span class="ucrs-sidebar__brand-sub">UNICROSS</span>
+    </div>
+  </div>
+
+  <% if (user) { %>
+  <div class="ucrs-sidebar__user-card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <div class="ucrs-avatar ucrs-avatar--lecturer"><%= user.name.charAt(0).toUpperCase() %></div>
+      <div>
+        <div class="ucrs-sidebar__user-name"><%= user.name %></div>
+        <div class="ucrs-sidebar__user-role">
+          <span class="ucrs-role-pill ucrs-role-pill--lecturer">Lecturer</span>
+        </div>
+      </div>
+    </div>
+    <% if (user.staffId) { %>
+    <div style="font-size:0.75rem;color:var(--ucrs-gray-400);">Staff ID: <%= user.staffId %></div>
+    <% } %>
+  </div>
+  <% } %>
+
+  <nav class="ucrs-sidebar__nav">
+    <div class="ucrs-sidebar__section-label">Navigation</div>
+
+    <a href="/lecturer/dashboard" class="ucrs-sidebar__link">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+      </svg>
+      Dashboard
+    </a>
+
+    <a href="/lecturer/schedule" class="ucrs-sidebar__link">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      </svg>
+      Teaching Schedule
+    </a>
+  </nav>
+  <div class="ucrs-sidebar__promo" style="margin: 0 20px 20px;">
+    <h4>Need Help?</h4>
+    <p>Contact the UNICROSS IT Support desk for system issues.</p>
+  </div>
+
+  <div class="ucrs-sidebar__footer">
+    <form action="/logout" method="POST">
+      <button type="submit" class="ucrs-sidebar__logout" style="background:none;border:none;cursor:pointer;width:100%;text-align:left;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;height:18px">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+        </svg>
+        Sign Out
+      </button>
+    </form>
+  </div>
+</aside>

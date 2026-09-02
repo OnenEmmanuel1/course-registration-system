@@ -1,0 +1,113 @@
+<%- include('../partials/header') %>
+<div class="ucrs-shell">
+  <%- include('../partials/navbar-student') %>
+  <main class="ucrs-main">
+    <div class="ucrs-topbar">
+      <button id="ucrs-sidebar-toggle" style="background:none;border:none;cursor:pointer;padding:4px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;color:var(--ucrs-gray-600)"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <span class="ucrs-topbar__title">Course Catalog</span>
+      <div class="ucrs-topbar__user">
+        <div class="ucrs-avatar ucrs-avatar--student"><%= user.name.charAt(0).toUpperCase() %></div>
+        <span><%= user.name %></span>
+      </div>
+    </div>
+
+    <div class="ucrs-content">
+      <div class="ucrs-page-header">
+        <h1>Course Catalog</h1>
+        <p>Browse all available courses for <strong><%= semester %></strong>. Registered courses are highlighted in green.</p>
+      </div>
+
+      <!-- Filters -->
+      <form method="GET" action="/student/catalog" class="ucrs-filters">
+        <label for="filter-dept">Department:</label>
+        <select name="dept" id="filter-dept" class="ucrs-select">
+          <option value="">All Departments</option>
+          <% depts.forEach(function(d) { %>
+            <option value="<%= d.department %>" <%= filters.dept === d.department ? 'selected' : '' %>><%= d.department %></option>
+          <% }); %>
+        </select>
+
+        <label for="filter-level">Level:</label>
+        <select name="level" id="filter-level" class="ucrs-select">
+          <option value="">All Levels</option>
+          <% levels.forEach(function(l) { %>
+            <option value="<%= l.level %>" <%= filters.level == l.level ? 'selected' : '' %>>Level <%= l.level %></option>
+          <% }); %>
+        </select>
+
+        <label for="filter-search">Search:</label>
+        <input type="text" name="search" id="filter-search" class="ucrs-input" placeholder="Code or title…" value="<%= filters.search %>" />
+
+        <button type="submit" class="ucrs-btn ucrs-btn--primary ucrs-btn--sm">Filter</button>
+        <a href="/student/catalog" class="ucrs-btn ucrs-btn--ghost ucrs-btn--sm">Reset</a>
+      </form>
+
+      <!-- Course Table -->
+      <div class="ucrs-card">
+        <div class="ucrs-card__header">
+          <span class="ucrs-card__title"><%= courses.length %> course(s) found</span>
+          <a href="/student/register" class="ucrs-btn ucrs-btn--primary ucrs-btn--sm">Register Courses →</a>
+        </div>
+        <% if (courses.length === 0) { %>
+          <div class="ucrs-empty">
+            <div class="ucrs-empty__icon">🔍</div>
+            <h3>No Courses Found</h3>
+            <p>Try adjusting your filters.</p>
+          </div>
+        <% } else { %>
+        <div class="ucrs-table-wrap">
+          <table class="ucrs-table">
+            <thead>
+              <tr>
+                <th>Code</th><th>Title</th><th>Dept</th><th>Level</th>
+                <th>Credits</th><th>Prerequisites</th><th>Day & Time</th>
+                <th>Venue</th><th>Lecturer</th><th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% courses.forEach(function(c) { %>
+              <tr style="<%= registeredIds.has(c.id) ? 'background:var(--ucrs-success-bg)' : '' %>">
+                <td><span class="ucrs-badge ucrs-badge--primary"><%= c.code %></span></td>
+                <td><strong><%= c.title %></strong>
+                  <% if (c.description) { %>
+                    <div style="font-size:0.78rem;color:var(--ucrs-text-muted);margin-top:2px;"><%= c.description.substring(0,80) %><%= c.description.length > 80 ? '…' : '' %></div>
+                  <% } %>
+                </td>
+                <td><%= c.department %></td>
+                <td>Level <%= c.level %></td>
+                <td><span class="ucrs-badge ucrs-badge--gray"><%= c.credit_units %></span></td>
+                <td>
+                  <% if (c.prereq_codes) { %>
+                    <span style="font-size:0.8rem;color:var(--ucrs-lecturer)"><%= c.prereq_codes %></span>
+                  <% } else { %>
+                    <span class="ucrs-text-muted ucrs-text-sm">None</span>
+                  <% } %>
+                </td>
+                <td>
+                  <% if (c.day) { %>
+                    <div><%= c.day %></div>
+                    <div><span class="ucrs-time-chip"><%= String(c.start_time).slice(0,5) %> – <%= String(c.end_time).slice(0,5) %></span></div>
+                  <% } else { %>—<% } %>
+                </td>
+                <td><%= c.venue_name || '—' %></td>
+                <td><%= c.lecturer_name || '—' %></td>
+                <td>
+                  <% if (registeredIds.has(c.id)) { %>
+                    <span class="ucrs-badge ucrs-badge--success">Registered</span>
+                  <% } else { %>
+                    <span class="ucrs-badge ucrs-badge--gray">Available</span>
+                  <% } %>
+                </td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+        <% } %>
+      </div>
+    </div>
+    <%- include('../partials/footer') %>
+  </main>
+</div>

@@ -1,0 +1,87 @@
+<%- include('../partials/header') %>
+<div class="ucrs-shell">
+  <%- include('../partials/navbar-lecturer') %>
+  <main class="ucrs-main">
+    <div class="ucrs-topbar">
+      <button id="ucrs-sidebar-toggle" style="background:none;border:none;cursor:pointer;padding:4px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;color:var(--ucrs-gray-600)"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <span class="ucrs-topbar__title">Lecturer Dashboard</span>
+      <div class="ucrs-topbar__user">
+        <div class="ucrs-avatar ucrs-avatar--lecturer"><%= user.name.charAt(0).toUpperCase() %></div>
+        <span><%= user.name %></span>
+      </div>
+    </div>
+
+    <div class="ucrs-content">
+      <% if (flash.error && flash.error.length) { %>
+        <div class="ucrs-alert ucrs-alert--error"><span><%= flash.error[0] %></span></div>
+      <% } %>
+
+      <div class="ucrs-page-header">
+        <h1>Welcome, <%= user.name.split(' ').slice(0,2).join(' ') %></h1>
+        <p>Your teaching assignments for semester <strong><%= semester %></strong></p>
+      </div>
+
+      <!-- Stats -->
+      <div class="ucrs-stats-grid">
+        <div class="ucrs-stat ucrs-stat--purple">
+          <div class="ucrs-stat__label">Courses Assigned</div>
+          <div class="ucrs-stat__value"><%= schedule.length %></div>
+          <div class="ucrs-stat__sub">this semester</div>
+        </div>
+        <div class="ucrs-stat ucrs-stat--success">
+          <div class="ucrs-stat__label">Total Students</div>
+          <div class="ucrs-stat__value"><%= schedule.reduce((s,r) => s + (parseInt(r.enrolled_count)||0), 0) %></div>
+          <div class="ucrs-stat__sub">across all courses</div>
+        </div>
+      </div>
+
+      <!-- Teaching Schedule -->
+      <div class="ucrs-card">
+        <div class="ucrs-card__header">
+          <span class="ucrs-card__title">Teaching Schedule</span>
+          <a href="/lecturer/schedule" class="ucrs-btn ucrs-btn--ghost ucrs-btn--sm">Full View</a>
+        </div>
+        <% if (schedule.length === 0) { %>
+          <div class="ucrs-empty">
+            <div class="ucrs-empty__icon">📋</div>
+            <h3>No Teaching Assignments</h3>
+            <p>You have no courses assigned for semester <strong><%= semester %></strong>. Contact the administrator.</p>
+          </div>
+        <% } else { %>
+        <div class="ucrs-table-wrap">
+          <table class="ucrs-table">
+            <thead>
+              <tr>
+                <th>Day</th><th>Time</th><th>Code</th><th>Course Title</th>
+                <th>Dept</th><th>Credits</th><th>Venue</th><th>Capacity</th><th>Enrolled</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% schedule.forEach(function(row) { %>
+              <tr>
+                <td><strong><%= row.day %></strong></td>
+                <td><span class="ucrs-time-chip"><%= String(row.start_time).slice(0,5) %> – <%= String(row.end_time).slice(0,5) %></span></td>
+                <td><span class="ucrs-badge ucrs-badge--purple"><%= row.code %></span></td>
+                <td><strong><%= row.title %></strong></td>
+                <td><%= row.department %></td>
+                <td><span class="ucrs-badge ucrs-badge--gray"><%= row.credit_units %> units</span></td>
+                <td><%= row.venue_name %></td>
+                <td><%= row.venue_capacity %> seats</td>
+                <td>
+                  <span class="ucrs-badge <%= parseInt(row.enrolled_count) >= parseInt(row.venue_capacity) ? 'ucrs-badge--danger' : 'ucrs-badge--success' %>">
+                    <%= row.enrolled_count %> / <%= row.venue_capacity %>
+                  </span>
+                </td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+        <% } %>
+      </div>
+    </div>
+    <%- include('../partials/footer') %>
+  </main>
+</div>

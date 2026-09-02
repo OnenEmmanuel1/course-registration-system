@@ -1,0 +1,104 @@
+<%- include('../partials/header') %>
+<div class="ucrs-shell">
+  <%- include('../partials/navbar-admin') %>
+  <main class="ucrs-main">
+    <div class="ucrs-topbar">
+      <button id="ucrs-sidebar-toggle" style="background:none;border:none;cursor:pointer;padding:4px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;color:var(--ucrs-gray-600)"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <span class="ucrs-topbar__title">Admin Dashboard</span>
+      <div class="ucrs-topbar__user">
+        <div class="ucrs-avatar ucrs-avatar--admin"><%= user.name.charAt(0).toUpperCase() %></div>
+        <span><%= user.name %></span>
+      </div>
+    </div>
+
+    <div class="ucrs-content">
+      <% if (flash.error && flash.error.length) { %>
+        <div class="ucrs-alert ucrs-alert--error"><span><%= flash.error[0] %></span></div>
+      <% } %>
+
+      <div class="ucrs-page-header">
+        <h1>System Overview</h1>
+        <p>UNICROSS UCRSystem — Semester: <strong><%= semester %></strong></p>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="ucrs-stats-grid">
+        <div class="ucrs-stat ucrs-stat--success">
+          <div class="ucrs-stat__label">Students</div>
+          <div class="ucrs-stat__value"><%= stats.total_students %></div>
+          <div class="ucrs-stat__sub">registered users</div>
+        </div>
+        <div class="ucrs-stat ucrs-stat--purple">
+          <div class="ucrs-stat__label">Lecturers</div>
+          <div class="ucrs-stat__value"><%= stats.total_lecturers %></div>
+        </div>
+        <div class="ucrs-stat ucrs-stat--primary">
+          <div class="ucrs-stat__label">Courses</div>
+          <div class="ucrs-stat__value"><%= stats.total_courses %></div>
+          <div class="ucrs-stat__sub">in catalog</div>
+        </div>
+        <div class="ucrs-stat ucrs-stat--warning">
+          <div class="ucrs-stat__label">Registrations</div>
+          <div class="ucrs-stat__value"><%= stats.total_registrations %></div>
+          <div class="ucrs-stat__sub">this semester</div>
+        </div>
+        <div class="ucrs-stat">
+          <div class="ucrs-stat__label">Venues</div>
+          <div class="ucrs-stat__value"><%= stats.total_venues %></div>
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="ucrs-card ucrs-mb-6">
+        <div class="ucrs-card__header"><span class="ucrs-card__title">Quick Actions</span></div>
+        <div class="ucrs-card__body" style="display:flex;flex-wrap:wrap;gap:10px;">
+          <a href="/admin/courses" class="ucrs-btn ucrs-btn--primary ucrs-btn--sm">+ New Course</a>
+          <a href="/admin/venues" class="ucrs-btn ucrs-btn--outline ucrs-btn--sm">Manage Venues</a>
+          <a href="/admin/timetable" class="ucrs-btn ucrs-btn--outline ucrs-btn--sm">Timetable</a>
+          <a href="/admin/users" class="ucrs-btn ucrs-btn--outline ucrs-btn--sm">View Users</a>
+          <a href="/admin/reports" class="ucrs-btn ucrs-btn--ghost ucrs-btn--sm">Reports & Export</a>
+        </div>
+      </div>
+
+      <!-- Top Enrolled Courses -->
+      <div class="ucrs-card">
+        <div class="ucrs-card__header">
+          <span class="ucrs-card__title">Enrollment Summary (Top Courses)</span>
+          <a href="/admin/reports?type=enrollment" class="ucrs-btn ucrs-btn--ghost ucrs-btn--sm">Full Report →</a>
+        </div>
+        <% if (enrollmentData.length === 0) { %>
+          <div class="ucrs-empty"><div class="ucrs-empty__icon">📊</div><h3>No enrollment data yet.</h3></div>
+        <% } else { %>
+        <div class="ucrs-table-wrap">
+          <table class="ucrs-table">
+            <thead>
+              <tr><th>Code</th><th>Title</th><th>Dept</th><th>Level</th><th>Credits</th><th>Lecturer</th><th>Venue</th><th>Enrolled</th></tr>
+            </thead>
+            <tbody>
+              <% enrollmentData.forEach(function(row) { %>
+              <tr>
+                <td><span class="ucrs-badge ucrs-badge--primary"><%= row.code %></span></td>
+                <td><strong><%= row.title %></strong></td>
+                <td><%= row.department %></td>
+                <td>Level <%= row.level %></td>
+                <td><span class="ucrs-badge ucrs-badge--gray"><%= row.credit_units %></span></td>
+                <td><%= row.lecturer_name || '—' %></td>
+                <td><%= row.venue_name || '—' %></td>
+                <td>
+                  <span class="ucrs-badge <%= parseInt(row.enrolled_count) > 0 ? 'ucrs-badge--success' : 'ucrs-badge--gray' %>">
+                    <%= row.enrolled_count %>
+                  </span>
+                </td>
+              </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+        <% } %>
+      </div>
+    </div>
+    <%- include('../partials/footer') %>
+  </main>
+</div>
