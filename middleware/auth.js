@@ -59,6 +59,7 @@ function injectUser(req, res, next) {
         level: req.session.level,
         matricNo: req.session.matricNo,
         staffId: req.session.staffId,
+        profilePhotoUrl: req.session.profilePhotoType ? `/account/photo/${req.session.userId}` : null,
       }
     : null;
   res.locals.flash = {

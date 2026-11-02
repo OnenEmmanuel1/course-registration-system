@@ -5,35 +5,45 @@ const engine  = require('../../engine/ucrsEngine');
 const { requireRole, noCache } = require('../../middleware/auth');
 
 const router = express.Router();
-const SEMESTER = process.env.CURRENT_SEMESTER || '2024/2025-1';
 
-router.use(requireRole('lecturer'), noCache);
+router.use(requireRole('lecturer'), noCache, async (req, res, next) => {
+  try {
+    req.currentSemester = await engine.getCurrentSemester(pool);
+    req.semesters = await engine.getAvailableSemesters(pool, req.currentSemester);
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 router.get('/dashboard', async (req, res) => {
+  const semester = req.query.semester || req.currentSemester;
   try {
-    const schedule = await engine.getLecturerSchedule(pool, req.session.userId, SEMESTER);
+    const schedule = await engine.getLecturerSchedule(pool, req.session.userId, semester);
     res.render('lecturer/dashboard', {
       title: 'Lecturer Dashboard — UCRSystem',
       schedule,
-      semester: SEMESTER,
+      semester,
+      semesters: req.semesters,
     });
   } catch (err) {
     console.error(err);
     req.flash('error', 'Could not load dashboard.');
-    res.render('lecturer/dashboard', { title: 'Dashboard', schedule: [], semester: SEMESTER });
+    res.render('lecturer/dashboard', { title: 'Dashboard', schedule: [], semester, semesters: req.semesters });
   }
 });
 
 // ── Teaching Schedule ─────────────────────────────────────────────────────────
 router.get('/schedule', async (req, res) => {
   try {
-    const semester = req.query.semester || SEMESTER;
+    const semester = req.query.semester || req.currentSemester;
     const schedule = await engine.getLecturerSchedule(pool, req.session.userId, semester);
     res.render('lecturer/schedule', {
       title: 'My Teaching Schedule — UCRSystem',
       schedule,
       semester,
+      semesters: req.semesters,
     });
   } catch (err) {
     console.error(err);
@@ -46,7 +56,7 @@ router.get('/schedule', async (req, res) => {
 router.get('/course/:courseId/students', async (req, res) => {
   try {
     const { courseId } = req.params;
-    const semester = req.query.semester || SEMESTER;
+    const semester = req.query.semester || req.currentSemester;
 
     // Verify this lecturer teaches this course
     const [ttRows] = await pool.execute(

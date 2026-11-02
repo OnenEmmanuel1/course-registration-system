@@ -1,0 +1,146 @@
+<%- include('../partials/header') %>
+<div class="ucrs-shell">
+  <%- include('../partials/navbar-admin') %>
+  <main class="ucrs-main">
+    <div class="ucrs-topbar">
+      <button id="ucrs-sidebar-toggle" style="background:none;border:none;cursor:pointer;padding:4px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;color:var(--ucrs-gray-600)"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <span class="ucrs-topbar__title">System Settings</span>
+      <div class="ucrs-topbar__user"><div class="ucrs-avatar ucrs-avatar--admin"><%= user.name.charAt(0).toUpperCase() %></div><span><%= user.name %></span></div>
+    </div>
+
+    <div class="ucrs-content ucrs-settings-content">
+      <%- include('../partials/flash-messages') %>
+      <div class="ucrs-page-header"><h1>System Settings</h1><p>Manage the semester used across student registration, schedules, and reports.</p></div>
+      <div class="ucrs-settings-grid">
+      <section class="ucrs-card">
+        <div class="ucrs-card__header"><span class="ucrs-card__title">Current Semester</span></div>
+        <div class="ucrs-card__body">
+          <p style="margin-top:0;color:var(--ucrs-gray-600);">The active semester is <strong><%= semester %></strong>.</p>
+          <form action="/admin/settings/semester" method="POST">
+            <div class="ucrs-form-group">
+              <label class="ucrs-label ucrs-label--required" for="current-semester">Change active semester</label>
+              <select id="current-semester" name="semester" class="ucrs-select" required>
+                <% semesters.forEach(function(option) { %>
+                  <option value="<%= option %>" <%= option === semester ? 'selected' : '' %>><%= option %></option>
+                <% }); %>
+              </select>
+              <small class="ucrs-text-muted">Choose the semester used by default throughout the system.</small>
+            </div>
+            <button type="submit" class="ucrs-btn ucrs-btn--primary">Save Semester</button>
+          </form>
+        </div>
+      </section>
+      <section class="ucrs-card">
+        <div class="ucrs-card__header"><span class="ucrs-card__title">Add a Semester</span></div>
+        <div class="ucrs-card__body">
+          <p style="margin-top:0;color:var(--ucrs-gray-600);">Create a semester so it becomes available in semester dropdowns across the system.</p>
+          <form action="/admin/settings/semesters" method="POST">
+            <div class="ucrs-form-group">
+              <label class="ucrs-label ucrs-label--required" for="new-semester">Semester</label>
+              <input id="new-semester" name="semester" class="ucrs-input" type="text" placeholder="2026/2027-1" pattern="[0-9]{4}/[0-9]{4}-[12]" required />
+              <small class="ucrs-text-muted">Format: academic year followed by term 1 or 2 (example: 2026/2027-1).</small>
+            </div>
+            <div class="ucrs-inline-checkbox">
+              <input id="make-semester-active" name="make_active" type="checkbox" />
+              <label for="make-semester-active">Make this the active semester</label>
+            </div>
+            <button type="submit" class="ucrs-btn ucrs-btn--primary">Add Semester</button>
+          </form>
+        </div>
+      </section>
+      <section class="ucrs-card">
+        <div class="ucrs-card__header"><span class="ucrs-card__title">Manage Faculties</span></div>
+        <div class="ucrs-card__body">
+          <form action="/admin/settings/faculties" method="POST">
+            <div class="ucrs-form-group">
+              <label class="ucrs-label ucrs-label--required" for="faculty-name">Faculty name</label>
+              <input id="faculty-name" name="name" class="ucrs-input" maxlength="120" required placeholder="e.g. Faculty of Health Sciences" />
+            </div>
+            <button type="submit" class="ucrs-btn ucrs-btn--primary">Add Faculty</button>
+          </form>
+          <div class="ucrs-table-wrap" style="margin-top:20px;">
+            <table class="ucrs-table">
+              <thead><tr><th>Faculty</th><th>Actions</th></tr></thead>
+              <tbody><% faculties.forEach(function(faculty) { %>
+                <tr>
+                  <td><form action="/admin/settings/faculties/<%= faculty.id %>/update" method="POST" style="display:flex;gap:8px;align-items:center;">
+                    <input class="ucrs-input" name="name" value="<%= faculty.name %>" maxlength="120" required aria-label="Faculty name" />
+                    <button type="submit" class="ucrs-btn ucrs-btn--outline ucrs-btn--sm">Save</button>
+                  </form></td>
+                  <td><form action="/admin/settings/faculties/<%= faculty.id %>/delete" method="POST">
+                    <button type="submit" class="ucrs-btn ucrs-btn--danger ucrs-btn--sm" data-confirm="Delete faculty ‘<%= faculty.name %>’? Reassign its departments and users first.">Delete</button>
+                  </form></td>
+                </tr>
+              <% }); %></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      <section class="ucrs-card">
+        <div class="ucrs-card__header"><span class="ucrs-card__title">Manage Departments</span></div>
+        <div class="ucrs-card__body">
+          <form action="/admin/settings/departments" method="POST">
+            <div class="ucrs-form-group">
+              <label class="ucrs-label ucrs-label--required" for="department-name">Department name</label>
+              <input id="department-name" name="name" class="ucrs-input" maxlength="120" required placeholder="e.g. Public Health" />
+            </div>
+            <div class="ucrs-form-group">
+              <label class="ucrs-label ucrs-label--required" for="department-faculty">Faculty</label>
+              <select id="department-faculty" name="faculty_id" class="ucrs-select" required>
+                <option value="">Select a faculty</option>
+                <% faculties.forEach(function(faculty) { %><option value="<%= faculty.id %>"><%= faculty.name %></option><% }); %>
+              </select>
+            </div>
+            <button type="submit" class="ucrs-btn ucrs-btn--primary">Add Department</button>
+          </form>
+        </div>
+      </section>
+      </div>
+      <section id="departments-and-faculties" class="ucrs-card ucrs-settings-department-table">
+        <div class="ucrs-card__header"><span class="ucrs-card__title">Departments and Faculties</span></div>
+        <form action="/admin/settings" method="GET" class="ucrs-filters" style="align-items:end;padding:20px 20px 0;">
+          <div class="ucrs-form-group" style="margin:0;min-width:220px;">
+            <label class="ucrs-label" for="settings-filter-faculty">Faculty</label>
+            <select id="settings-filter-faculty" name="faculty_id" class="ucrs-select">
+              <option value="">All faculties</option>
+              <% faculties.forEach(function(faculty) { %><option value="<%= faculty.id %>" <%= String(faculty.id) === filterFaculty ? 'selected' : '' %>><%= faculty.name %></option><% }); %>
+            </select>
+          </div>
+          <div class="ucrs-form-group" style="margin:0;min-width:220px;">
+            <label class="ucrs-label" for="settings-filter-department">Department</label>
+            <select id="settings-filter-department" name="department" class="ucrs-select">
+              <option value="">All departments</option>
+              <% departmentOptions.forEach(function(item) { %><option value="<%= item.name %>" <%= item.name === filterDepartment ? 'selected' : '' %>><%= item.name %></option><% }); %>
+            </select>
+          </div>
+          <button type="submit" class="ucrs-btn ucrs-btn--primary ucrs-btn--sm">Filter</button>
+          <a href="/admin/settings#departments-and-faculties" class="ucrs-btn ucrs-btn--ghost ucrs-btn--sm">Clear</a>
+        </form>
+        <div class="ucrs-table-wrap">
+          <table class="ucrs-table">
+            <thead><tr><th>Department</th><th>Faculty</th><th>Actions</th></tr></thead>
+            <tbody>
+              <% if (departments.length) { departments.forEach(function(department) { %>
+                <tr>
+                  <td><input form="department-edit-<%= department.id %>" class="ucrs-input" name="name" value="<%= department.name %>" maxlength="120" required aria-label="Department name" /></td>
+                  <td><select form="department-edit-<%= department.id %>" name="faculty_id" class="ucrs-select" required aria-label="Faculty">
+                    <% faculties.forEach(function(faculty) { %><option value="<%= faculty.id %>" <%= faculty.name === department.faculty_name ? 'selected' : '' %>><%= faculty.name %></option><% }); %>
+                  </select></td>
+                  <td style="white-space:nowrap;">
+                    <form id="department-edit-<%= department.id %>" action="/admin/settings/departments/<%= department.id %>/update" method="POST" style="display:inline;"><button type="submit" class="ucrs-btn ucrs-btn--outline ucrs-btn--sm">Save</button></form>
+                    <form action="/admin/settings/departments/<%= department.id %>/delete" method="POST" style="display:inline;"><button type="submit" class="ucrs-btn ucrs-btn--danger ucrs-btn--sm" data-confirm="Delete department ‘<%= department.name %>’? Reassign its users and courses first.">Delete</button></form>
+                  </td>
+                </tr>
+              <% }); } else { %>
+                <tr><td colspan="3">No departments match these filters.</td></tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <%- include('../partials/footer') %>
+  </main>
+</div>

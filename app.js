@@ -19,6 +19,7 @@ const authRoutes     = require('./routes/pages/auth');
 const studentRoutes  = require('./routes/pages/student');
 const lecturerRoutes = require('./routes/pages/lecturer');
 const adminRoutes    = require('./routes/pages/admin');
+const accountRoutes  = require('./routes/pages/account');
 
 // API Routes
 const apiCourses       = require('./routes/api/courses');
@@ -35,7 +36,7 @@ app.set('views', path.join(__dirname, 'views'));
 
 // ── Middleware ────────────────────────────────────────────────────────────────
 app.use(express.urlencoded({ extended: true, limit: '2mb' }));
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '3mb' }));
 app.use(methodOverride('_method'));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -57,6 +58,7 @@ app.use(injectUser);
 
 // ── Page Routes ───────────────────────────────────────────────────────────────
 app.use('/', authRoutes);
+app.use('/account', accountRoutes);
 app.use('/student',  studentRoutes);
 app.use('/lecturer', lecturerRoutes);
 app.use('/admin',    adminRoutes);

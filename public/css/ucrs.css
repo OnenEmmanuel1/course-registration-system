@@ -117,7 +117,7 @@ img { max-width: 100%; }
 .ucrs-content {
   flex: 1;
   padding: 32px 40px;
-  max-width: 1500px;
+  max-width: none;
   width: 100%;
 }
 
@@ -173,6 +173,7 @@ img { max-width: 100%; }
   color: #fff;
   flex-shrink: 0;
 }
+.ucrs-avatar img { width: 100%; height: 100%; display: block; object-fit: cover; border-radius: inherit; }
 
 .ucrs-avatar--student  { background: var(--ucrs-student); }
 .ucrs-avatar--lecturer { background: var(--ucrs-lecturer); }
@@ -491,6 +492,32 @@ img { max-width: 100%; }
   font-family: var(--ucrs-font-heading);
 }
 
+/* Keep every course action visible without a nested horizontal scroller. */
+.ucrs-table-wrap--courses { overflow: visible; padding: 0 10px; }
+.ucrs-course-table { table-layout: fixed; }
+.ucrs-course-table th,
+.ucrs-course-table td { padding: 12px 8px; }
+.ucrs-course-table th { white-space: normal; }
+.ucrs-course-table td { overflow-wrap: anywhere; }
+.ucrs-course-col-code { width: 12%; }
+.ucrs-course-col-title { width: 18%; }
+.ucrs-course-col-dept { width: 15%; }
+.ucrs-course-col-level { width: 7%; }
+.ucrs-course-col-credits { width: 8%; }
+.ucrs-course-col-prereq { width: 14%; }
+.ucrs-course-col-actions { width: 26%; }
+.ucrs-course-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.ucrs-course-actions .ucrs-btn {
+  padding: 7px 10px;
+  font-size: 0.78rem;
+}
+.ucrs-course-actions form { display: inline-flex; }
+
 /* ── Badges & Status Pills ───────────────────────────────────── */
 .ucrs-badge {
   display: inline-flex;
@@ -636,6 +663,31 @@ img { max-width: 100%; }
 }
 
 .ucrs-input::placeholder { color: var(--ucrs-gray-400); }
+
+.ucrs-password-field { position: relative; width: 100%; }
+.ucrs-password-field .ucrs-input { padding-right: 52px; }
+.ucrs-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ucrs-gray-600);
+  cursor: pointer;
+}
+.ucrs-password-toggle:hover { background: var(--ucrs-gray-100); color: var(--ucrs-gray-900); }
+.ucrs-password-toggle:focus-visible { outline: 3px solid var(--ucrs-primary-light); outline-offset: 1px; }
+.ucrs-password-toggle svg { width: 20px; height: 20px; }
+.ucrs-password-toggle__hide { display: none; }
+.ucrs-password-toggle[aria-pressed="true"] .ucrs-password-toggle__show { display: none; }
+.ucrs-password-toggle[aria-pressed="true"] .ucrs-password-toggle__hide { display: block; }
 
 .ucrs-input--search {
   padding-left: 40px;
@@ -1164,6 +1216,8 @@ img { max-width: 100%; }
   .ucrs-login-wrap { border-radius: 0; height: 100vh; }
   .ucrs-login__hero { display: none; }
   .ucrs-login__panel { max-width: 100%; padding: 40px; }
+  .ucrs-courses-layout { grid-template-columns: minmax(0, 1fr) !important; }
+  #course-form { position: static !important; }
 }
 
 @media (max-width: 768px) {
@@ -1191,3 +1245,113 @@ img { max-width: 100%; }
 .ucrs-font-bold     { font-weight: 700; }
 .ucrs-hidden        { display: none !important; }
 .ucrs-sr-only       { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+/* In-app confirmation dialog (replaces browser localhost prompts) */
+.ucrs-confirm-dialog {
+  width: min(440px, calc(100vw - 32px));
+  max-width: none;
+  padding: 28px;
+  border: 1px solid var(--ucrs-border);
+  border-radius: 16px;
+  background: var(--ucrs-surface);
+  color: var(--ucrs-gray-900);
+  box-shadow: 0 24px 70px rgba(17, 33, 27, 0.24);
+  font-family: var(--ucrs-font);
+}
+.ucrs-confirm-dialog::backdrop {
+  background: rgba(17, 33, 27, 0.48);
+  backdrop-filter: blur(3px);
+}
+.ucrs-confirm-dialog[open] {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 4px 14px;
+  align-items: start;
+  animation: ucrs-dialog-in 150ms ease-out;
+}
+.ucrs-confirm-dialog__icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--ucrs-danger-bg);
+  color: var(--ucrs-danger-text);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+.ucrs-confirm-dialog__content h2 {
+  margin: 2px 0 6px;
+  color: var(--ucrs-gray-900);
+  font: 700 1.1rem/1.35 var(--ucrs-font-heading);
+}
+.ucrs-confirm-dialog__content p {
+  margin: 0;
+  color: var(--ucrs-gray-600);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.ucrs-confirm-dialog__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+.ucrs-confirm-dialog__actions button { min-width: 92px; }
+.ucrs-confirm-dialog__actions button:focus-visible {
+  outline: 3px solid var(--ucrs-primary-light);
+  outline-offset: 2px;
+}
+@keyframes ucrs-dialog-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ucrs-confirm-dialog[open] { animation: none; }
+}
+
+.ucrs-account-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 24px;
+}
+.ucrs-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 16px;
+}
+.ucrs-settings-grid > .ucrs-card { min-width: 0; }
+.ucrs-settings-department-table { margin-top: 16px; }
+.ucrs-inline-checkbox {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 20px;
+  text-align: left;
+}
+.ucrs-inline-checkbox input { width: 16px; height: 16px; flex: 0 0 16px; margin: 0; }
+.ucrs-inline-checkbox label { margin: 0; cursor: pointer; }
+.ucrs-profile-photo-preview {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.ucrs-profile-photo-preview__avatar {
+  width: 76px;
+  height: 76px;
+  flex: 0 0 76px;
+  font-size: 1.7rem;
+}
+.ucrs-profile-photo-preview__avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+@media (max-width: 800px) {
+  .ucrs-account-settings-grid { grid-template-columns: minmax(0, 1fr); }
+  .ucrs-settings-grid { grid-template-columns: minmax(0, 1fr); }
+}

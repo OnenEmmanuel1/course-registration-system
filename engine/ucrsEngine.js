@@ -37,6 +37,31 @@ async function getCreditPolicy(db = pool) {
   };
 }
 
+async function getCurrentSemester(db = pool) {
+  const [rows] = await db.execute(
+    "SELECT setting_value FROM app_settings WHERE setting_key = 'current_semester' LIMIT 1"
+  );
+  return rows[0]?.setting_value || process.env.CURRENT_SEMESTER || '2024/2025-1';
+}
+
+async function getAvailableSemesters(db = pool, currentSemester) {
+  const [rows] = await db.execute(
+    `SELECT semester FROM timetable
+     UNION SELECT semester FROM registrations
+     UNION SELECT semester FROM course_lecturers
+     UNION SELECT semester FROM semesters`
+  );
+  const active = currentSemester || await getCurrentSemester(db);
+  const match = active.match(/^(\d{4})\/(\d{4})-[12]$/);
+  const startYear = match ? Number(match[1]) : new Date().getFullYear();
+  const semesters = new Set(rows.map(row => row.semester));
+  semesters.add(active);
+  for (let year = startYear - 2; year <= startYear + 3; year += 1) {
+    for (const term of [1, 2]) semesters.add(`${year}/${year + 1}-${term}`);
+  }
+  return [...semesters].sort((a, b) => b.localeCompare(a));
+}
+
 // ─── Prerequisite Validation ──────────────────────────────────────────────────
 
 /**
@@ -77,6 +102,29 @@ async function checkPrerequisites(db = pool, studentId, courseId) {
     ok: missing.length === 0,
     missing,
   };
+}
+
+/** Return courses at the student's level in their department, plus failed courses. */
+async function getRegistrationCourses(db = pool, studentId) {
+  const [rows] = await db.execute(
+    `SELECT c.id, c.code, c.title, c.credit_units, c.department, c.level,
+            GROUP_CONCAT(DISTINCT p.code ORDER BY p.code SEPARATOR ', ') AS prereq_codes,
+            EXISTS(SELECT 1 FROM completed_courses cc
+                   WHERE cc.student_id = u.id AND cc.course_id = c.id AND cc.grade = 'F'
+                     AND NOT EXISTS (SELECT 1 FROM completed_courses passed
+                                     WHERE passed.student_id = u.id AND passed.course_id = c.id AND passed.grade != 'F')) AS is_carryover
+     FROM users u
+     JOIN courses c ON (c.department = u.department AND c.level = u.level)
+       OR EXISTS(SELECT 1 FROM completed_courses cc
+                 WHERE cc.student_id = u.id AND cc.course_id = c.id AND cc.grade = 'F')
+     LEFT JOIN course_prerequisites cp ON cp.course_id = c.id
+     LEFT JOIN courses p ON p.id = cp.prerequisite_id
+     WHERE u.id = ? AND u.role = 'student'
+     GROUP BY c.id
+     ORDER BY c.department, c.level, c.code`,
+    [studentId]
+  );
+  return rows;
 }
 
 // ─── Credit-Limit Validation ──────────────────────────────────────────────────
@@ -126,6 +174,21 @@ async function checkCreditLimit(db = pool, studentId, semester, newCreditUnits) 
  * @returns {{ ok: boolean, reason?: string, type?: 'prerequisite'|'credit_limit'|'already_registered', details?: object }}
  */
 async function validateCourseSelection(db = pool, studentId, courseId, semester) {
+  const [eligible] = await db.execute(
+    `SELECT c.id FROM courses c JOIN users u ON u.id = ? AND u.role = 'student'
+     WHERE c.id = ? AND (
+       (c.department = u.department AND c.level = u.level)
+       OR EXISTS (SELECT 1 FROM completed_courses cc
+                  WHERE cc.student_id = u.id AND cc.course_id = c.id AND cc.grade = 'F'
+                    AND NOT EXISTS (SELECT 1 FROM completed_courses passed
+                                    WHERE passed.student_id = u.id AND passed.course_id = c.id AND passed.grade != 'F'))
+     )`,
+    [studentId, courseId]
+  );
+  if (!eligible.length) {
+    return { ok: false, type: 'not_eligible', reason: 'This course is not for your department and level, and it is not one of your carryover courses.' };
+  }
+
   // 0. Check already registered
   const [existing] = await db.execute(
     `SELECT id FROM registrations
@@ -253,14 +316,16 @@ async function getStudentSchedule(db = pool, studentId, semester) {
     `SELECT
        c.code, c.title, c.credit_units,
        v.name  AS venue_name, v.capacity AS venue_capacity,
-       u.name  AS lecturer_name,
+       COALESCE(assigned_lecturer.name, u.name) AS lecturer_name,
        t.day, t.start_time, t.end_time,
        r.registered_at, r.status
      FROM registrations r
      JOIN courses   c ON c.id = r.course_id
      LEFT JOIN timetable t ON t.course_id = r.course_id AND t.semester = r.semester
+     LEFT JOIN course_lecturers cl ON cl.course_id = r.course_id AND cl.semester = r.semester
      LEFT JOIN venues    v ON v.id = t.venue_id
      LEFT JOIN users     u ON u.id = t.lecturer_id
+     LEFT JOIN users assigned_lecturer ON assigned_lecturer.id = cl.lecturer_id
      WHERE r.student_id = ? AND r.semester = ? AND r.status != 'dropped'
      ORDER BY
        FIELD(t.day,'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'),
@@ -363,12 +428,15 @@ async function getCreditLoadReport(db = pool, semester) {
 
 module.exports = {
   checkPrerequisites,
+  getRegistrationCourses,
   checkCreditLimit,
   validateCourseSelection,
   registerCourses,
   getStudentSchedule,
   getLecturerSchedule,
   getCreditPolicy,
+  getCurrentSemester,
+  getAvailableSemesters,
   getEnrollmentReport,
   getVenueUtilizationReport,
   getCreditLoadReport,

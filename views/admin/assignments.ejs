@@ -1,0 +1,78 @@
+<%- include('../partials/header') %>
+<div class="ucrs-shell">
+  <%- include('../partials/navbar-admin') %>
+  <main class="ucrs-main">
+    <div class="ucrs-topbar">
+      <button id="ucrs-sidebar-toggle" style="background:none;border:none;cursor:pointer;padding:4px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;color:var(--ucrs-gray-600)"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <span class="ucrs-topbar__title">Course Lecturer Assignments</span>
+      <div class="ucrs-topbar__user"><div class="ucrs-avatar ucrs-avatar--admin"><%= user.name.charAt(0).toUpperCase() %></div><span><%= user.name %></span></div>
+    </div>
+
+    <div class="ucrs-content">
+      <%- include('../partials/flash-messages') %>
+      <div class="ucrs-page-header ucrs-flex-between">
+        <div><h1>Assign Lecturers to Courses</h1><p>Choose the lecturer responsible for each course in a semester.</p></div>
+        <form method="GET" style="display:flex;align-items:center;gap:8px;">
+          <label for="assignment-semester">Semester:</label>
+          <select id="assignment-semester" name="semester" class="ucrs-select" style="width:180px">
+            <% semesters.forEach(function(option) { %><option value="<%= option %>" <%= option === semester ? 'selected' : '' %>><%= option %></option><% }); %>
+          </select>
+          <button class="ucrs-btn ucrs-btn--ghost ucrs-btn--sm">View</button>
+        </form>
+      </div>
+
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start;">
+        <section class="ucrs-card">
+          <div class="ucrs-card__header"><span class="ucrs-card__title"><%= assignments.length %> assignment(s) for <%= semester %></span></div>
+          <% if (!assignments.length) { %>
+            <div class="ucrs-empty"><h3>No course assignments yet</h3><p>Use the form to assign a lecturer to a course.</p></div>
+          <% } else { %>
+            <div class="ucrs-table-wrap"><table class="ucrs-table">
+              <thead><tr><th>Course</th><th>Department</th><th>Lecturer</th><th>Action</th></tr></thead>
+              <tbody><% assignments.forEach(function(a) { %>
+                <tr>
+                  <td><span class="ucrs-badge ucrs-badge--primary"><%= a.code %></span><div style="font-size:.8rem;margin-top:4px"><%= a.title %></div></td>
+                  <td><%= a.department %></td>
+                  <td><%= a.lecturer_name %><div style="font-size:.8rem;color:var(--ucrs-text-muted)"><%= a.staff_id || '' %></div></td>
+                  <td><form action="/admin/assignments/<%= a.id %>/delete" method="POST">
+                    <input type="hidden" name="semester" value="<%= semester %>" />
+                    <button type="submit" class="ucrs-btn ucrs-btn--danger ucrs-btn--sm" data-confirm="Remove this course lecturer assignment?">Remove</button>
+                  </form></td>
+                </tr>
+              <% }); %></tbody>
+            </table></div>
+          <% } %>
+        </section>
+
+        <section class="ucrs-card" style="position:sticky;top:80px;">
+          <div class="ucrs-card__header"><span class="ucrs-card__title">Assign a Lecturer</span></div>
+          <div class="ucrs-card__body">
+            <form action="/admin/assignments" method="POST">
+              <div class="ucrs-form-group"><label class="ucrs-label ucrs-label--required" for="assignment-course">Course</label>
+                <select id="assignment-course" name="course_id" class="ucrs-select" required>
+                  <option value="">Select a course…</option>
+                  <% courses.forEach(function(c) { %><option value="<%= c.id %>" <%= selectedCourseId == c.id ? 'selected' : '' %>><%= c.code %> — <%= c.title %> (<%= c.department %>)</option><% }); %>
+                </select>
+              </div>
+              <div class="ucrs-form-group"><label class="ucrs-label ucrs-label--required" for="assignment-lecturer">Lecturer</label>
+                <select id="assignment-lecturer" name="lecturer_id" class="ucrs-select" required>
+                  <option value="">Select a lecturer…</option>
+                  <% lecturers.forEach(function(l) { %><option value="<%= l.id %>"><%= l.name %> — <%= l.department %> (<%= l.staff_id || 'No staff ID' %>)</option><% }); %>
+                </select>
+              </div>
+              <div class="ucrs-form-group"><label class="ucrs-label ucrs-label--required" for="assignment-semester-form">Semester</label>
+                <select id="assignment-semester-form" name="semester" class="ucrs-select" required>
+                  <% semesters.forEach(function(option) { %><option value="<%= option %>" <%= option === semester ? 'selected' : '' %>><%= option %></option><% }); %>
+                </select>
+              </div>
+              <button type="submit" class="ucrs-btn ucrs-btn--primary ucrs-btn--full">Save Assignment</button>
+            </form>
+          </div>
+        </section>
+      </div>
+    </div>
+    <%- include('../partials/footer') %>
+  </main>
+</div>

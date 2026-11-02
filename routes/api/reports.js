@@ -5,11 +5,19 @@ const engine  = require('../../engine/ucrsEngine');
 const { requireRole } = require('../../middleware/auth');
 
 const router = express.Router();
-const SEMESTER = process.env.CURRENT_SEMESTER || '2024/2025-1';
+
+router.use(requireRole('admin'), async (req, res, next) => {
+  try {
+    req.currentSemester = await engine.getCurrentSemester(pool);
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
 // GET /api/reports/enrollment
-router.get('/enrollment', requireRole('admin'), async (req, res) => {
-  const semester = req.query.semester || SEMESTER;
+router.get('/enrollment', async (req, res) => {
+  const semester = req.query.semester || req.currentSemester;
   try {
     const data = await engine.getEnrollmentReport(pool, semester);
     res.json({ ok: true, data });
@@ -19,8 +27,8 @@ router.get('/enrollment', requireRole('admin'), async (req, res) => {
 });
 
 // GET /api/reports/venue
-router.get('/venue', requireRole('admin'), async (req, res) => {
-  const semester = req.query.semester || SEMESTER;
+router.get('/venue', async (req, res) => {
+  const semester = req.query.semester || req.currentSemester;
   try {
     const data = await engine.getVenueUtilizationReport(pool, semester);
     res.json({ ok: true, data });
@@ -30,8 +38,8 @@ router.get('/venue', requireRole('admin'), async (req, res) => {
 });
 
 // GET /api/reports/credit
-router.get('/credit', requireRole('admin'), async (req, res) => {
-  const semester = req.query.semester || SEMESTER;
+router.get('/credit', async (req, res) => {
+  const semester = req.query.semester || req.currentSemester;
   try {
     const data = await engine.getCreditLoadReport(pool, semester);
     res.json({ ok: true, data });

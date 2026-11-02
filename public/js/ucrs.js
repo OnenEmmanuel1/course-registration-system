@@ -83,6 +83,19 @@
   }
   updateCreditPreview();
 
+  /* Toggle password visibility */
+  document.querySelectorAll('[data-password-toggle]').forEach(button => {
+    button.addEventListener('click', () => {
+      const input = document.getElementById(button.dataset.passwordToggle);
+      if (!input) return;
+      const isVisible = input.type === 'text';
+      input.type = isVisible ? 'password' : 'text';
+      button.setAttribute('aria-pressed', String(!isVisible));
+      button.setAttribute('aria-label', isVisible ? 'Show password' : 'Hide password');
+      input.focus();
+    });
+  });
+
   /* ── Real-Time Per-Course Validation via API ───────────────── */
   const validateBtn = document.getElementById('ucrs-validate-btn');
   const submitBtn   = document.getElementById('ucrs-submit-btn');
@@ -240,12 +253,48 @@
   });
 
   /* ── Delete Confirm ─────────────────────────────────────────── */
+  const confirmDialog = document.createElement('dialog');
+  confirmDialog.className = 'ucrs-confirm-dialog';
+  confirmDialog.setAttribute('aria-labelledby', 'ucrs-confirm-title');
+  confirmDialog.setAttribute('aria-describedby', 'ucrs-confirm-message');
+  confirmDialog.innerHTML = `
+    <div class="ucrs-confirm-dialog__icon" aria-hidden="true">!</div>
+    <div class="ucrs-confirm-dialog__content">
+      <h2 id="ucrs-confirm-title">Please confirm</h2>
+      <p id="ucrs-confirm-message"></p>
+    </div>
+    <div class="ucrs-confirm-dialog__actions">
+      <button type="button" class="ucrs-btn ucrs-btn--ghost" data-confirm-cancel>Cancel</button>
+      <button type="button" class="ucrs-btn ucrs-btn--danger" data-confirm-accept>Confirm</button>
+    </div>`;
+  document.body.appendChild(confirmDialog);
+
+  let pendingConfirmation = null;
+  const confirmMessage = confirmDialog.querySelector('#ucrs-confirm-message');
+  const confirmAccept = confirmDialog.querySelector('[data-confirm-accept]');
+
   document.querySelectorAll('[data-confirm]').forEach(el => {
     el.addEventListener('click', (e) => {
-      const msg = el.dataset.confirm || 'Are you sure?';
-      if (!window.confirm(msg)) e.preventDefault();
+      e.preventDefault();
+      pendingConfirmation = el;
+      const message = el.dataset.confirm || 'Are you sure you want to continue?';
+      confirmMessage.textContent = message;
+      const actionWord = message.match(/\b(delete|remove)\b/i)?.[1];
+      confirmAccept.textContent = actionWord ? actionWord[0].toUpperCase() + actionWord.slice(1).toLowerCase() : 'Confirm';
+      confirmDialog.showModal();
     });
   });
+
+  confirmDialog.querySelector('[data-confirm-cancel]').addEventListener('click', () => confirmDialog.close());
+  confirmAccept.addEventListener('click', () => {
+    const target = pendingConfirmation;
+    pendingConfirmation = null;
+    confirmDialog.close();
+    if (!target) return;
+    if (target.form) target.form.requestSubmit(target);
+    else if (target.href) window.location.assign(target.href);
+  });
+  confirmDialog.addEventListener('close', () => { pendingConfirmation = null; });
 
   /* ── Escape HTML helper ─────────────────────────────────────── */
   function escHtml(str) {

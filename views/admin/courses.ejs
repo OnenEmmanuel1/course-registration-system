@@ -23,14 +23,20 @@
 
       <div class="ucrs-page-header"><h1>Manage Courses</h1></div>
 
-      <div style="display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start;">
+      <div class="ucrs-courses-layout" style="display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px;align-items:start;">
         <!-- Course List -->
         <div class="ucrs-card">
           <div class="ucrs-card__header">
             <span class="ucrs-card__title"><%= courses.length %> Course(s)</span>
           </div>
-          <div class="ucrs-table-wrap">
-            <table class="ucrs-table">
+          <div class="ucrs-table-wrap ucrs-table-wrap--courses">
+            <table class="ucrs-table ucrs-course-table">
+              <colgroup>
+                <col class="ucrs-course-col-code" /><col class="ucrs-course-col-title" />
+                <col class="ucrs-course-col-dept" /><col class="ucrs-course-col-level" />
+                <col class="ucrs-course-col-credits" /><col class="ucrs-course-col-prereq" />
+                <col class="ucrs-course-col-actions" />
+              </colgroup>
               <thead>
                 <tr><th>Code</th><th>Title</th><th>Dept</th><th>Lvl</th><th>Credits</th><th>Prerequisites</th><th>Actions</th></tr>
               </thead>
@@ -44,8 +50,9 @@
                   <td><span class="ucrs-badge ucrs-badge--gray"><%= c.credit_units %></span></td>
                   <td><span style="font-size:0.8rem;color:var(--ucrs-lecturer)"><%= c.prereq_codes || 'None' %></span></td>
                   <td>
-                    <div style="display:flex;gap:6px;">
-                      <a href="/admin/courses/<%= c.id %>/edit" class="ucrs-btn ucrs-btn--ghost ucrs-btn--sm">Edit</a>
+                    <div class="ucrs-course-actions">
+                      <a href="/admin/courses/<%= c.id %>/edit#course-form" class="ucrs-btn ucrs-btn--ghost ucrs-btn--sm">Edit</a>
+                      <a href="/admin/assignments?course_id=<%= c.id %>" class="ucrs-btn ucrs-btn--ghost ucrs-btn--sm">Assign Lecturer</a>
                       <form action="/admin/courses/<%= c.id %>/delete" method="POST" style="display:inline;">
                         <button type="submit" class="ucrs-btn ucrs-btn--danger ucrs-btn--sm"
                           data-confirm="Delete course '<%= c.code %>'? This will also remove prerequisite links.">Delete</button>
@@ -60,7 +67,7 @@
         </div>
 
         <!-- Create / Edit Form -->
-        <div class="ucrs-card" style="position:sticky;top:80px;">
+        <div class="ucrs-card" id="course-form" style="position:sticky;top:80px;">
           <div class="ucrs-card__header">
             <span class="ucrs-card__title"><%= editCourse ? 'Edit Course' : 'Create New Course' %></span>
             <% if (editCourse) { %><a href="/admin/courses" class="ucrs-btn ucrs-btn--ghost ucrs-btn--sm">Cancel</a><% } %>
@@ -94,8 +101,13 @@
               </div>
               <div class="ucrs-form-group">
                 <label class="ucrs-label ucrs-label--required">Department</label>
-                <input type="text" name="department" class="ucrs-input" required placeholder="e.g. Computer Science"
-                  value="<%= editCourse ? editCourse.department : '' %>" />
+                <select name="department" class="ucrs-select" required>
+                  <option value="">Select a department</option>
+                  <% departments.forEach(function(item) { %>
+                    <option value="<%= item.department %>" <%= editCourse && editCourse.department === item.department ? 'selected' : '' %>><%= item.department %></option>
+                  <% }); %>
+                </select>
+                <small class="ucrs-text-muted">Need another department? Add it under <a href="/admin/settings">Admin Settings</a>.</small>
               </div>
               <div class="ucrs-form-group">
                 <label class="ucrs-label">Description</label>

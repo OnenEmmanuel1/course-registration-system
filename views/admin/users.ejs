@@ -2,6 +2,7 @@
 <div class="ucrs-shell">
   <%- include('../partials/navbar-admin') %>
   <main class="ucrs-main">
+    <%- include('../partials/flash-messages') %>
     <div class="ucrs-topbar">
       <button id="ucrs-sidebar-toggle" style="background:none;border:none;cursor:pointer;padding:4px;">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;color:var(--ucrs-gray-600)"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -16,13 +17,22 @@
     <div class="ucrs-content">
       <div class="ucrs-page-header"><h1>User Management</h1><p>All registered users in the system.</p></div>
 
-      <!-- Role Filter -->
-      <div class="ucrs-filters">
-        <a href="/admin/users" class="ucrs-btn <%= !filterRole ? 'ucrs-btn--primary' : 'ucrs-btn--ghost' %> ucrs-btn--sm">All</a>
-        <a href="/admin/users?role=student" class="ucrs-btn <%= filterRole === 'student' ? 'ucrs-btn--success' : 'ucrs-btn--ghost' %> ucrs-btn--sm">Students</a>
-        <a href="/admin/users?role=lecturer" class="ucrs-btn <%= filterRole === 'lecturer' ? 'ucrs-btn--outline' : 'ucrs-btn--ghost' %> ucrs-btn--sm">Lecturers</a>
-        <a href="/admin/users?role=admin" class="ucrs-btn <%= filterRole === 'admin' ? 'ucrs-btn--warning' : 'ucrs-btn--ghost' %> ucrs-btn--sm">Admins</a>
-      </div>
+      <form action="/admin/users" method="GET" class="ucrs-filters" style="align-items:end;margin-bottom:20px;">
+        <div class="ucrs-form-group" style="margin:0;min-width:150px;"><label class="ucrs-label" for="filter-role">Role</label>
+          <select id="filter-role" name="role" class="ucrs-select"><option value="">All roles</option><option value="student" <%= filterRole === 'student' ? 'selected' : '' %>>Students</option><option value="lecturer" <%= filterRole === 'lecturer' ? 'selected' : '' %>>Lecturers</option><option value="admin" <%= filterRole === 'admin' ? 'selected' : '' %>>Admins</option></select>
+        </div>
+        <div class="ucrs-form-group" style="margin:0;min-width:190px;"><label class="ucrs-label" for="filter-faculty">Faculty</label>
+          <select id="filter-faculty" name="faculty" class="ucrs-select"><option value="">All faculties</option><% faculties.forEach(function(item) { %><option value="<%= item.faculty %>" <%= filterFaculty === item.faculty ? 'selected' : '' %>><%= item.faculty %></option><% }); %></select>
+        </div>
+        <div class="ucrs-form-group" style="margin:0;min-width:190px;"><label class="ucrs-label" for="filter-department">Department</label>
+          <select id="filter-department" name="department" class="ucrs-select"><option value="">All departments</option><% departments.forEach(function(item) { %><option value="<%= item.department %>" <%= filterDepartment === item.department ? 'selected' : '' %>><%= item.department %></option><% }); %></select>
+        </div>
+        <div class="ucrs-form-group" style="margin:0;min-width:130px;"><label class="ucrs-label" for="filter-level">Level</label>
+          <select id="filter-level" name="level" class="ucrs-select"><option value="">All levels</option><% levels.forEach(function(item) { %><option value="<%= item.level %>" <%= filterLevel == item.level ? 'selected' : '' %>>Level <%= item.level %></option><% }); %></select>
+        </div>
+        <button type="submit" class="ucrs-btn ucrs-btn--primary ucrs-btn--sm">Filter Users</button>
+        <a href="/admin/users" class="ucrs-btn ucrs-btn--ghost ucrs-btn--sm">Clear</a>
+      </form>
 
       <div class="ucrs-card">
         <div class="ucrs-card__header">
@@ -31,7 +41,7 @@
         <div class="ucrs-table-wrap">
           <table class="ucrs-table">
             <thead>
-              <tr><th>Name</th><th>Email</th><th>Role</th><th>Department</th><th>Level/ID</th><th>Joined</th></tr>
+              <tr><th>Name</th><th>Email</th><th>Role</th><th>Faculty</th><th>Department</th><th>Level/ID</th><th>Joined</th></tr>
             </thead>
             <tbody>
               <% users.forEach(function(u) { %>
@@ -39,13 +49,14 @@
                 <td>
                   <div style="display:flex;align-items:center;gap:8px;">
                     <div class="ucrs-avatar ucrs-avatar--<%= u.role %>" style="width:30px;height:30px;font-size:0.75rem;">
-                      <%= u.name.charAt(0).toUpperCase() %>
+                      <% if (u.profile_photo_type) { %><img src="/account/photo/<%= u.id %>" alt="" /><% } else { %><%= u.name.charAt(0).toUpperCase() %><% } %>
                     </div>
                     <strong><%= u.name %></strong>
                   </div>
                 </td>
                 <td><%= u.email %></td>
                 <td><span class="ucrs-role-pill ucrs-role-pill--<%= u.role %>"><%= u.role %></span></td>
+                <td><%= u.faculty || '—' %></td>
                 <td><%= u.department || '—' %></td>
                 <td>
                   <% if (u.role === 'student') { %>

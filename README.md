@@ -17,7 +17,7 @@ Three-Tier Architecture:
 - ✅ **Real-Time Feedback** — specific error reasons (missing prereq names, credit totals)
 - ✅ **Finalized Schedule** — with assigned venue, lecturer, and time slot
 - ✅ **Lecturer Dashboard** — teaching assignments with enrollment count
-- ✅ **Admin CRUD** — courses (with prerequisites), venues, timetable
+- ✅ **Admin CRUD** — courses (with prerequisites), venues, timetable, and semester-based course lecturer assignments
 - ✅ **Reports** — enrollment, venue utilization, credit distribution; CSV export
 - ✅ **Docker Compose** — one command brings up app + MySQL with seeded data
 
@@ -125,14 +125,14 @@ UCRSystem/
 │   ├── auth/login.ejs
 │   ├── student/              # dashboard, catalog, register, schedule
 │   ├── lecturer/             # dashboard, schedule, students
-│   ├── admin/                # dashboard, courses, venues, timetable, users, reports
+│   ├── admin/                # dashboard, courses, assignments, venues, timetable, users, reports
 │   └── errors/               # 404, 500
 ├── public/
 │   ├── css/ucrs.css          # Complete flat design system (ucrs-* prefix)
 │   └── js/ucrs.js            # Client-side JS
 ├── database/
 │   ├── schema.sql            # 8-table normalized schema
-│   └── seed.sql              # Admin, 2 lecturers, 5 students, 8 courses, prereqs
+│   └── seed.sql              # Admin, lecturers across departments, sample students/courses, prereqs
 ├── Dockerfile
 ├── docker-compose.yml
 ├── .env.example

@@ -11,7 +11,7 @@
   <% if (user) { %>
   <div class="ucrs-sidebar__user-card">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-      <div class="ucrs-avatar ucrs-avatar--lecturer"><%= user.name.charAt(0).toUpperCase() %></div>
+      <%- include('avatar') %>
       <div>
         <div class="ucrs-sidebar__user-name"><%= user.name %></div>
         <div class="ucrs-sidebar__user-role">
@@ -41,6 +41,7 @@
       </svg>
       Teaching Schedule
     </a>
+    <a href="/account" class="ucrs-sidebar__link">Account Settings</a>
   </nav>
   <div class="ucrs-sidebar__promo" style="margin: 0 20px 20px;">
     <h4>Need Help?</h4>

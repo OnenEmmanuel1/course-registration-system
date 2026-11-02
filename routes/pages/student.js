@@ -5,15 +5,23 @@ const engine  = require('../../engine/ucrsEngine');
 const { requireRole, noCache } = require('../../middleware/auth');
 
 const router = express.Router();
-const SEMESTER = process.env.CURRENT_SEMESTER || '2024/2025-1';
 
 // All student routes require 'student' role
-router.use(requireRole('student'), noCache);
+router.use(requireRole('student'), noCache, async (req, res, next) => {
+  try {
+    req.currentSemester = await engine.getCurrentSemester(pool);
+    req.semesters = await engine.getAvailableSemesters(pool, req.currentSemester);
+    next();
+  } catch (err) {
+    next(err);
+  }
+});
 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 router.get('/dashboard', async (req, res) => {
+  const semester = req.query.semester || req.currentSemester;
   try {
-    const schedule = await engine.getStudentSchedule(pool, req.session.userId, SEMESTER);
+    const schedule = await engine.getStudentSchedule(pool, req.session.userId, semester);
     const policy   = await engine.getCreditPolicy(pool);
 
     // Sum current credits
@@ -24,12 +32,13 @@ router.get('/dashboard', async (req, res) => {
       schedule,
       totalCredits,
       policy,
-      semester: SEMESTER,
+      semester,
+      semesters: req.semesters,
     });
   } catch (err) {
     console.error(err);
     req.flash('error', 'Could not load dashboard data.');
-    res.render('student/dashboard', { title: 'Dashboard', schedule: [], totalCredits: 0, policy: {min:12,max:24}, semester: SEMESTER });
+    res.render('student/dashboard', { title: 'Dashboard', schedule: [], totalCredits: 0, policy: {min:12,max:24}, semester, semesters: req.semesters });
   }
 });
 
@@ -42,15 +51,17 @@ router.get('/catalog', async (req, res) => {
         GROUP_CONCAT(DISTINCT p.code ORDER BY p.code SEPARATOR ', ') AS prereq_codes,
         t.day, t.start_time, t.end_time,
         v.name AS venue_name,
-        u.name AS lecturer_name
+        COALESCE(assigned_lecturer.name, u.name) AS lecturer_name
       FROM courses c
       LEFT JOIN course_prerequisites cp ON cp.course_id = c.id
       LEFT JOIN courses p ON p.id = cp.prerequisite_id
       LEFT JOIN timetable t ON t.course_id = c.id AND t.semester = ?
       LEFT JOIN venues v ON v.id = t.venue_id
       LEFT JOIN users  u ON u.id = t.lecturer_id
+      LEFT JOIN course_lecturers cl ON cl.course_id = c.id AND cl.semester = ?
+      LEFT JOIN users assigned_lecturer ON assigned_lecturer.id = cl.lecturer_id
       WHERE 1=1`;
-    const params = [SEMESTER];
+    const params = [req.currentSemester, req.currentSemester];
 
     if (dept)   { sql += ' AND c.department = ?'; params.push(dept); }
     if (level)  { sql += ' AND c.level = ?';      params.push(parseInt(level)); }
@@ -67,7 +78,7 @@ router.get('/catalog', async (req, res) => {
     // Get already-registered course IDs for this student in current semester
     const [regRows] = await pool.execute(
       `SELECT course_id FROM registrations WHERE student_id = ? AND semester = ? AND status != 'dropped'`,
-      [req.session.userId, SEMESTER]
+      [req.session.userId, req.currentSemester]
     );
     const registeredIds = new Set(regRows.map(r => r.course_id));
 
@@ -78,7 +89,7 @@ router.get('/catalog', async (req, res) => {
       levels,
       registeredIds,
       filters: { dept: dept || '', level: level || '', search: search || '' },
-      semester: SEMESTER,
+      semester: req.currentSemester,
     });
   } catch (err) {
     console.error(err);
@@ -90,19 +101,11 @@ router.get('/catalog', async (req, res) => {
 // ── Registration Page ─────────────────────────────────────────────────────────
 router.get('/register', async (req, res) => {
   try {
-    const [courses] = await pool.execute(
-      `SELECT c.id, c.code, c.title, c.credit_units, c.department, c.level,
-              GROUP_CONCAT(DISTINCT p.code ORDER BY p.code SEPARATOR ', ') AS prereq_codes
-       FROM courses c
-       LEFT JOIN course_prerequisites cp ON cp.course_id = c.id
-       LEFT JOIN courses p ON p.id = cp.prerequisite_id
-       GROUP BY c.id
-       ORDER BY c.department, c.level, c.code`
-    );
+    const courses = await engine.getRegistrationCourses(pool, req.session.userId);
 
     const [regRows] = await pool.execute(
       `SELECT course_id FROM registrations WHERE student_id = ? AND semester = ? AND status != 'dropped'`,
-      [req.session.userId, SEMESTER]
+      [req.session.userId, req.currentSemester]
     );
     const registeredIds = new Set(regRows.map(r => r.course_id));
 
@@ -113,7 +116,7 @@ router.get('/register', async (req, res) => {
       `SELECT COALESCE(SUM(c.credit_units),0) AS total
        FROM registrations r JOIN courses c ON c.id=r.course_id
        WHERE r.student_id=? AND r.semester=? AND r.status!='dropped'`,
-      [req.session.userId, SEMESTER]
+      [req.session.userId, req.currentSemester]
     );
     const currentCredits = parseInt(creditRow[0].total || 0);
 
@@ -123,7 +126,7 @@ router.get('/register', async (req, res) => {
       registeredIds,
       policy,
       currentCredits,
-      semester: SEMESTER,
+      semester: req.currentSemester,
       results: null,
     });
   } catch (err) {
@@ -151,21 +154,13 @@ router.post('/register', async (req, res) => {
       return res.redirect('/student/register');
     }
 
-    const { results } = await engine.registerCourses(pool, req.session.userId, courseIds, SEMESTER);
+    const { results } = await engine.registerCourses(pool, req.session.userId, courseIds, req.currentSemester);
 
     // Re-fetch data for re-render
-    const [courses] = await pool.execute(
-      `SELECT c.id, c.code, c.title, c.credit_units, c.department, c.level,
-              GROUP_CONCAT(DISTINCT p.code ORDER BY p.code SEPARATOR ', ') AS prereq_codes
-       FROM courses c
-       LEFT JOIN course_prerequisites cp ON cp.course_id = c.id
-       LEFT JOIN courses p ON p.id = cp.prerequisite_id
-       GROUP BY c.id
-       ORDER BY c.department, c.level, c.code`
-    );
+    const courses = await engine.getRegistrationCourses(pool, req.session.userId);
     const [regRows] = await pool.execute(
       `SELECT course_id FROM registrations WHERE student_id = ? AND semester = ? AND status != 'dropped'`,
-      [req.session.userId, SEMESTER]
+      [req.session.userId, req.currentSemester]
     );
     const registeredIds = new Set(regRows.map(r => r.course_id));
     const policy = await engine.getCreditPolicy(pool);
@@ -173,7 +168,7 @@ router.post('/register', async (req, res) => {
       `SELECT COALESCE(SUM(c.credit_units),0) AS total
        FROM registrations r JOIN courses c ON c.id=r.course_id
        WHERE r.student_id=? AND r.semester=? AND r.status!='dropped'`,
-      [req.session.userId, SEMESTER]
+      [req.session.userId, req.currentSemester]
     );
     const currentCredits = parseInt(creditRow[0].total || 0);
 
@@ -183,7 +178,7 @@ router.post('/register', async (req, res) => {
       registeredIds,
       policy,
       currentCredits,
-      semester: SEMESTER,
+      semester: req.currentSemester,
       results,
     });
   } catch (err) {
@@ -196,7 +191,7 @@ router.post('/register', async (req, res) => {
 // ── Schedule ──────────────────────────────────────────────────────────────────
 router.get('/schedule', async (req, res) => {
   try {
-    const semester = req.query.semester || SEMESTER;
+    const semester = req.query.semester || req.currentSemester;
     const schedule = await engine.getStudentSchedule(pool, req.session.userId, semester);
     const policy   = await engine.getCreditPolicy(pool);
     const totalCredits = schedule.reduce((sum, r) => sum + (r.credit_units || 0), 0);
@@ -207,6 +202,7 @@ router.get('/schedule', async (req, res) => {
       totalCredits,
       policy,
       semester,
+      semesters: req.semesters,
     });
   } catch (err) {
     console.error(err);

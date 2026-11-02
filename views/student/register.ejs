@@ -2,6 +2,7 @@
 <div class="ucrs-shell">
   <%- include('../partials/navbar-student') %>
   <main class="ucrs-main">
+    <%- include('../partials/flash-messages') %>
     <div class="ucrs-topbar">
       <button id="ucrs-sidebar-toggle" style="background:none;border:none;cursor:pointer;padding:4px;">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:24px;height:24px;color:var(--ucrs-gray-600)"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
@@ -158,6 +159,9 @@
                     <div class="ucrs-course-card__meta">
                       <span class="ucrs-badge ucrs-badge--gray"><%= c.credit_units %> units</span>
                       <span class="ucrs-badge ucrs-badge--gray">Level <%= c.level %></span>
+                      <% if (c.is_carryover) { %>
+                        <span class="ucrs-badge ucrs-badge--warning">Carryover</span>
+                      <% } %>
                       <% if (isRegistered) { %>
                         <span class="ucrs-badge ucrs-badge--success">✓ Registered</span>
                       <% } %>

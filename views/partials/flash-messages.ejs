@@ -1,0 +1,9 @@
+<% if (flash) { %>
+  <% ['success', 'error', 'info'].forEach(function(type) { %>
+    <% (flash[type] || []).forEach(function(message) { %>
+      <div class="ucrs-alert ucrs-alert--<%= type === 'success' ? 'success' : (type === 'error' ? 'error' : 'info') %>" role="<%= type === 'error' ? 'alert' : 'status' %>">
+        <span><%= message %></span>
+      </div>
+    <% }); %>
+  <% }); %>
+<% } %>

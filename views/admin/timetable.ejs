@@ -25,7 +25,9 @@
         <h1>Timetable</h1>
         <form method="GET" style="display:flex;align-items:center;gap:8px;">
           <label style="font-size:0.875rem;font-weight:600;color:var(--ucrs-gray-600)">Semester:</label>
-          <input type="text" name="semester" class="ucrs-input" style="width:160px" value="<%= semester %>" />
+          <select name="semester" class="ucrs-select" style="width:180px">
+            <% semesters.forEach(function(option) { %><option value="<%= option %>" <%= option === semester ? 'selected' : '' %>><%= option %></option><% }); %>
+          </select>
           <button type="submit" class="ucrs-btn ucrs-btn--ghost ucrs-btn--sm">Filter</button>
         </form>
       </div>
@@ -108,7 +110,9 @@
               </div>
               <div class="ucrs-form-group">
                 <label class="ucrs-label ucrs-label--required">Semester</label>
-                <input type="text" name="semester" class="ucrs-input" required value="<%= semester %>" />
+                <select name="semester" class="ucrs-select" required>
+                  <% semesters.forEach(function(option) { %><option value="<%= option %>" <%= option === semester ? 'selected' : '' %>><%= option %></option><% }); %>
+                </select>
               </div>
               <div class="ucrs-form-group">
                 <label class="ucrs-label ucrs-label--required">Day</label>

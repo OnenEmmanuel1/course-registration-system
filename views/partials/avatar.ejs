@@ -1,0 +1,7 @@
+<div class="ucrs-avatar ucrs-avatar--<%= user.role %>">
+  <% if (user.profilePhotoUrl) { %>
+    <img src="<%= user.profilePhotoUrl %>" alt="" />
+  <% } else { %>
+    <%= user.name.charAt(0).toUpperCase() %>
+  <% } %>
+</div>

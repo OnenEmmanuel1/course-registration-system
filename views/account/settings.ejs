@@ -1,0 +1,99 @@
+<%- include('../partials/header') %>
+<div class="ucrs-shell">
+  <%- include('../partials/navbar-' + user.role) %>
+  <main class="ucrs-main">
+    <div class="ucrs-topbar">
+      <button id="ucrs-sidebar-toggle" style="background:none;border:none;cursor:pointer;padding:4px;">☰</button>
+      <span class="ucrs-topbar__title">Account Settings</span>
+      <div class="ucrs-topbar__user">
+        <div class="ucrs-avatar ucrs-avatar--<%= user.role %>"><% if (account.profile_photo_type) { %><img src="/account/photo/<%= user.id %>" alt="" /><% } else { %><%= user.name.charAt(0).toUpperCase() %><% } %></div>
+        <span><%= user.name %></span>
+      </div>
+    </div>
+    <div class="ucrs-content">
+      <%- include('../partials/flash-messages') %>
+      <div class="ucrs-page-header"><h1>Account Settings</h1><p>Update your profile photo and password.</p></div>
+      <div class="ucrs-account-settings-grid">
+        <section class="ucrs-card">
+          <div class="ucrs-card__header"><span class="ucrs-card__title">Profile Picture</span></div>
+          <div class="ucrs-card__body">
+            <div class="ucrs-profile-photo-preview">
+              <div class="ucrs-avatar ucrs-avatar--<%= user.role %> ucrs-profile-photo-preview__avatar">
+                <img id="profile-photo-preview" src="<%= account.profile_photo_type ? '/account/photo/' + user.id : '' %>" alt="Profile photo preview" <%= account.profile_photo_type ? '' : 'hidden' %> />
+                <span id="profile-photo-initial" <%= account.profile_photo_type ? 'hidden' : '' %>><%= user.name.charAt(0).toUpperCase() %></span>
+              </div>
+              <div><strong><%= account.name %></strong><div class="ucrs-text-muted"><%= account.email %></div></div>
+            </div>
+            <div class="ucrs-form-group">
+              <label class="ucrs-label" for="profile-photo-file">Choose an image</label>
+              <input class="ucrs-input" id="profile-photo-file" type="file" accept="image/jpeg,image/png,image/webp,image/gif" />
+              <small class="ucrs-text-muted">JPEG, PNG, WebP or GIF. Maximum size: 400 KB.</small>
+            </div>
+            <div class="ucrs-flex ucrs-gap-2">
+              <button type="button" id="save-profile-photo" class="ucrs-btn ucrs-btn--primary">Save photo</button>
+              <% if (account.profile_photo_type) { %><button type="button" id="remove-profile-photo" class="ucrs-btn ucrs-btn--ghost">Remove photo</button><% } %>
+            </div>
+            <p id="profile-photo-status" class="ucrs-text-sm" role="status" aria-live="polite"></p>
+          </div>
+        </section>
+
+        <section class="ucrs-card">
+          <div class="ucrs-card__header"><span class="ucrs-card__title">Change Password</span></div>
+          <div class="ucrs-card__body">
+            <form action="/account/password" method="POST">
+              <%- include('../partials/password-field', { id: 'current-password', name: 'current_password', label: 'Current password', autocomplete: 'current-password' }) %>
+              <%- include('../partials/password-field', { id: 'new-password', name: 'new_password', label: 'New password (at least 8 characters)', autocomplete: 'new-password' }) %>
+              <%- include('../partials/password-field', { id: 'confirm-password', name: 'confirm_password', label: 'Confirm new password', autocomplete: 'new-password' }) %>
+              <button type="submit" class="ucrs-btn ucrs-btn--primary">Update Password</button>
+            </form>
+          </div>
+        </section>
+      </div>
+    </div>
+    <%- include('../partials/footer') %>
+  </main>
+</div>
+<script>
+(() => {
+  const fileInput = document.getElementById('profile-photo-file');
+  const preview = document.getElementById('profile-photo-preview');
+  const initial = document.getElementById('profile-photo-initial');
+  const status = document.getElementById('profile-photo-status');
+  const saveButton = document.getElementById('save-profile-photo');
+  const removeButton = document.getElementById('remove-profile-photo');
+
+  const upload = async (payload) => {
+    status.textContent = 'Saving…';
+    const response = await fetch('/account/photo', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+    if (result.flash) { window.location.assign('/account'); return result; }
+    if (!response.ok || !result.ok) throw new Error(result.error || 'Could not update photo.');
+    if (result.removed) {
+      preview.hidden = true; initial.hidden = false; preview.removeAttribute('src'); removeButton?.remove();
+      status.textContent = 'Profile photo removed.';
+    } else {
+      preview.src = result.photoUrl; preview.hidden = false; initial.hidden = true;
+      status.textContent = 'Profile photo saved.';
+      if (!removeButton) window.location.reload();
+    }
+  };
+
+  saveButton.addEventListener('click', async () => {
+    const file = fileInput.files[0];
+    if (!file) { status.textContent = 'Choose a photo first.'; return; }
+    if (file.size > 400 * 1024) { status.textContent = 'Choose an image no larger than 400 KB.'; return; }
+    try {
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file);
+      });
+      await upload({ dataUrl });
+    } catch (err) { status.textContent = err.message || 'Could not read the selected photo.'; }
+  });
+
+  removeButton?.addEventListener('click', async () => {
+    try { await upload({ remove: true }); } catch (err) { status.textContent = err.message; }
+  });
+})();
+</script>
